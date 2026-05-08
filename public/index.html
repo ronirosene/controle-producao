@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle Produção</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0b1120;
+  --bg2: #111827;
+  --card: #1a2332;
+  --card2: #1e293b;
+  --border: #2a3a4e;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --green: #22c55e;
+  --yellow: #eab308;
+  --red: #ef4444;
+  --orange: #f97316;
+  --purple: #a855f7;
+  --radius: 8px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+}
+.hidden { display: none !important; }
+.sidebar {
+  width: 240px;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  transition: transform .3s, width .3s;
+}
+.sidebar.collapsed { width: 60px; transition: transform .3s, width .3s; }
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo {
+  flex: 1;
+  padding: 20px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.sidebar-logo svg { width: 24px; height: 24px; flex-shrink: 0; }
+.sidebar-toggle {
+  padding: 12px 14px;
+  cursor: pointer;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color .2s;
+  flex-shrink: 0;
+}
+.sidebar-toggle:hover { color: var(--text); }
+.sidebar-toggle svg { width: 20px; height: 20px; }
+.sidebar.collapsed .sidebar-logo span { display: none; }
+.sidebar.collapsed .nav-item { justify-content: center; padding: 10px; gap: 0; }
+.sidebar.collapsed .nav-item span,
+.sidebar.collapsed .nav-item #obs-nav-badge { display: none; }
+.sidebar.collapsed .sidebar-logo { padding: 14px 10px; justify-content: center; }
+.sidebar.collapsed .sidebar-footer { display: none; }
+.sidebar.collapsed + .main { margin-left: 60px; }
+@media (max-width: 768px) {
+  .sidebar.collapsed { transform: translateX(-100%); }
+  .sidebar.collapsed.open { transform: translateX(0); width: 240px; }
+  .sidebar.collapsed.open .sidebar-logo span { display: inline; }
+  .sidebar.collapsed.open .nav-item { justify-content: flex-start; padding: 10px 14px; gap: 10px; }
+  .sidebar.collapsed.open .nav-item span { display: inline; }
+  .sidebar.collapsed.open .sidebar-footer { display: block; }
+  .sidebar.collapsed + .main { margin-left: 0; }
+}
+.sidebar-nav { flex: 1; padding: 12px 8px; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: var(--text2);
+  transition: all .2s;
+  margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active { background: var(--primary); color: #fff; }
+.nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+}
+.user-info { font-size: 13px; color: var(--text2); margin-bottom: 8px; }
+.btn-logout {
+  width: 100%;
+  padding: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all .2s;
+}
+.btn-logout:hover { background: var(--red); color: #fff; border-color: var(--red); }
+.main {
+  margin-left: 240px;
+  flex: 1;
+  padding: 24px 32px;
+  max-width: 1200px;
+  transition: margin-left .3s;
+}
+.page-title { font-size: 24px; font-weight: 700; margin-bottom: 24px; }
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all .2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-green { background: var(--green); color: #000; }
+.btn-green:hover { opacity: .9; }
+.btn-red { background: var(--red); color: #fff; }
+.btn-red:hover { opacity: .9; }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--card); color: var(--text); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+}
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
+@media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+.stat-card { text-align: center; }
+.stat-card .label { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+.stat-card .value { font-size: 28px; font-weight: 700; }
+.stat-card.concluidos .value { color: var(--green); }
+.stat-card.pendentes .value { color: var(--orange); }
+.table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.detail-table-container { overflow: hidden; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  text-align: left;
+  padding: 8px 10px;
+  background: var(--bg2);
+  color: var(--text2);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+tr:hover td { background: rgba(59,130,246,.03); }
+
+/* Detail table - fixed layout for no horizontal scroll */
+.detail-table { table-layout: fixed; width: 100%; }
+.detail-table th,
+.detail-table td { overflow: hidden; text-overflow: ellipsis; word-break: break-word; }
+.detail-table th { white-space: nowrap; }
+.detail-table th:nth-child(1),
+.detail-table td:nth-child(1) { width: 24%; }
+.detail-table th:nth-child(2),
+.detail-table td:nth-child(2) { width: 9%; }
+.detail-table th:nth-child(3),
+.detail-table td:nth-child(3) { width: 17%; white-space: normal; }
+.detail-table th:nth-child(4),
+.detail-table td:nth-child(4) { width: 8%; }
+.detail-table th:nth-child(5),
+.detail-table td:nth-child(5) { width: 4%; text-align: center; }
+.detail-table th:nth-child(6),
+.detail-table td:nth-child(6) { width: 4%; text-align: center; }
+.detail-table th:nth-child(7),
+.detail-table td:nth-child(7) { width: 6%; text-align: center; }
+.detail-table th:nth-child(8),
+.detail-table td:nth-child(8) { width: 4%; text-align: center; }
+.detail-table th:nth-child(9),
+.detail-table td:nth-child(9) { width: 5%; text-align: center; }
+.detail-table th:nth-child(10),
+.detail-table td:nth-child(10) { width: 5%; text-align: center; }
+.detail-table th:nth-child(11),
+.detail-table td:nth-child(11) { width: 13%; text-align: center; }
+.sector-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.sector-marcenaria { background: rgba(249,115,22,.15); color: var(--orange); }
+.sector-lixa { background: rgba(234,179,8,.15); color: var(--yellow); }
+.sector-pintura { background: rgba(168,85,247,.15); color: var(--purple); }
+.sector-embalagem { background: rgba(34,197,94,.15); color: var(--green); }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color .2s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); }
+.form-select { cursor: pointer; }
+.form-textarea { min-height: 80px; resize: vertical; }
+.form-input-sm { padding: 6px 10px; font-size: 13px; }
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+}
+.auth-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  width: 100%;
+  max-width: 400px;
+}
+.auth-title { font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 24px; }
+.auth-tabs { display: flex; margin-bottom: 20px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+.auth-tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  background: var(--bg2);
+  color: var(--text2);
+  transition: all .2s;
+}
+.auth-tab.active { background: var(--primary); color: #fff; }
+.auth-error { color: var(--red); font-size: 13px; margin-bottom: 12px; text-align: center; }
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all .3s;
+  max-width: 400px;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: var(--green); color: #000; }
+.toast.error { background: var(--red); color: #fff; }
+.toast.info { background: var(--primary); color: #fff; }
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: auto; }
+.modal {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+.modal-close {
+  float: right;
+  background: none;
+  border: none;
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 20px;
+}
+.current-dist {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.dist-item {
+  text-align: center;
+  padding: 10px;
+  border-radius: var(--radius);
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+.dist-item .sector-name { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+.dist-item .sector-qty { font-size: 20px; font-weight: 700; }
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+}
+.dropzone:hover, .dropzone.dragover { border-color: var(--primary); background: rgba(59,130,246,.05); }
+.dropzone svg { width: 48px; height: 48px; color: var(--text2); margin-bottom: 12px; }
+.dropzone p { color: var(--text2); font-size: 14px; }
+.service-list { display: grid; gap: 12px; }
+.service-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all .2s;
+}
+.service-card:hover { border-color: var(--primary); }
+.service-card .name { font-size: 16px; font-weight: 600; }
+.service-card .meta { font-size: 13px; color: var(--text2); margin-top: 4px; }
+.service-card .progress { display: flex; align-items: center; gap: 10px; }
+.progress-bar { width: 120px; height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width .3s; }
+.action-row { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
+.loading { text-align: center; padding: 40px; color: var(--text2); }
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 14px;
+  margin-bottom: 16px;
+  transition: color .2s;
+}
+.back-btn:hover { color: var(--text); }
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.tag-ok { background: rgba(34,197,94,.15); color: var(--green); }
+.tag-atencao { background: rgba(234,179,8,.15); color: var(--yellow); }
+.tag-erro { background: rgba(239,68,68,.15); color: var(--red); }
+.checkbox-estoque {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--green);
+}
+.obs-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.obs-card .obs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+.obs-card .obs-servico { color: var(--primary); font-weight: 600; }
+.obs-card .obs-produto { color: var(--text); font-weight: 600; }
+.obs-card .obs-setor { font-size: 12px; }
+.obs-card .obs-texto {
+  background: var(--bg2);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--yellow);
+  border-left: 3px solid var(--yellow);
+}
+.obs-card .obs-data { color: var(--text2); font-size: 12px; }
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; padding: 12px; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .detail-table th:nth-child(2),
+  .detail-table td:nth-child(2) { display: none; }
+  .detail-table th:nth-child(4),
+  .detail-table td:nth-child(4) { display: none; }
+  th, td { padding: 6px 6px; font-size: 12px; }
+  .checkbox-estoque { width: 16px; height: 16px; }
+}
+@media (max-width: 500px) {
+  .detail-table th:nth-child(3),
+  .detail-table td:nth-child(3) { display: none; }
+  .page-title { font-size: 18px; }
+  .action-row { gap: 6px; }
+  .btn-sm { padding: 4px 8px; font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- Auth -->
+<div id="auth-section" class="auth-container hidden">
+  <div class="auth-box">
+    <div class="auth-title">Controle Produção</div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchAuthTab('login')">Entrar</div>
+      <div class="auth-tab" onclick="switchAuthTab('register')">Cadastrar</div>
+    </div>
+    <div id="auth-error" class="auth-error"></div>
+    <form id="login-form" onsubmit="return false;">
+      <div class="form-group"><label>Email</label><input class="form-input" type="email" id="login-email" placeholder="seu@email.com" required></div>
+      <div class="form-group"><label>Senha</label><input class="form-input" type="password" id="login-password" placeholder="••••••••" required></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doLogin()">Entrar</button>
+    </form>
+    <form id="register-form" class="hidden" onsubmit="return false;">
+      <div class="form-group"><label>Nome</label><input class="form-input" type="text" id="reg-name" placeholder="Seu nome" required></div>
+      <div class="form-group"><label>Email</label><input class="form-input" type="email" id="reg-email" placeholder="seu@email.com" required></div>
+      <div class="form-group"><label>Senha</label><input class="form-input" type="password" id="reg-password" placeholder="••••••••" required minlength="6"></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doRegister()">Cadastrar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Sidebar -->
+<div id="sidebar" class="sidebar hidden">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
+      <span>Controle Produção</span>
+    </div>
+    <div class="sidebar-toggle" onclick="toggleSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-item active" onclick="showSection('dashboard')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <span>Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="showSection('observacoes')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+      <span>Observações</span>
+      <span id="obs-nav-badge" class="hidden" style="background:var(--orange);color:#000;padding:1px 6px;border-radius:10px;font-size:11px;margin-left:auto;"></span>
+    </div>
+    <div class="nav-item" onclick="showSection('servicos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+      <span>Serviços</span>
+    </div>
+    <div class="nav-item" onclick="showSection('importar')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Importar</span>
+    </div>
+    <div class="nav-item" onclick="showSection('relatorio')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <span>Relatório</span>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div id="sidebar-user" class="user-info"></div>
+    <button class="btn-logout" onclick="doLogout()"><span>Sair</span></button>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div id="main" class="main hidden">
+
+  <!-- Dashboard -->
+  <div id="section-dashboard" class="hidden">
+    <div class="page-title">Dashboard</div>
+    <div class="grid-2" id="dash-stats"></div>
+    <div class="card" style="margin-bottom:16px;">
+      <h3 style="margin-bottom:16px;font-size:16px;">Serviços</h3>
+      <div id="dash-servicos-list"></div>
+    </div>
+  </div>
+
+  <!-- Observacoes -->
+  <div id="section-observacoes" class="hidden">
+    <div class="page-title">Observações das Movimentações</div>
+    <div id="obs-list"><div class="loading">Carregando...</div></div>
+    <div id="obs-empty" class="hidden" style="text-align:center;padding:40px;color:var(--text2);">Nenhuma observação registrada.</div>
+  </div>
+
+  <!-- Servicos list -->
+  <div id="section-servicos" class="hidden">
+    <div class="page-title">Serviços</div>
+    <div id="servicos-list"></div>
+    <div id="servicos-empty" class="hidden" style="text-align:center;padding:40px;color:var(--text2);">
+      Nenhum serviço importado ainda. <a href="#" onclick="showSection('importar');return false;" style="color:var(--primary);">Importar planilha</a>
+    </div>
+  </div>
+
+  <!-- Servico detail -->
+  <div id="section-servico-detail" class="hidden">
+    <div class="back-btn" onclick="showSection('servicos')">← Voltar</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap;">
+      <div class="page-title" style="margin-bottom:0;" id="detail-title"></div>
+      <button id="btn-add-produto" class="btn btn-sm btn-green" onclick="openAddProductModal()">+ Adicionar Produto</button>
+      <button id="btn-delete-servico" class="btn btn-sm btn-red hidden" onclick="confirmDeleteServico()">Excluir Serviço</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap;font-size:13px;">
+      <label style="color:var(--text2);font-weight:500;">Data início:</label>
+      <input type="date" id="detail-data-inicio" class="form-input form-input-sm" style="width:160px;" onchange="updateDataInicio(this.value)">
+    </div>
+    <div class="grid-2" id="detail-stats"></div>
+    <div class="table-container detail-table-container card" style="padding:0;margin-top:16px;">
+      <table class="detail-table">
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Cor</th>
+            <th>Detalhe</th>
+            <th>Observação</th>
+            <th>Est.</th>
+            <th>Total</th>
+            <th>Marcen.</th>
+            <th>Lixa</th>
+            <th>Pint.</th>
+            <th>Embal.</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="detail-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Import -->
+  <div id="section-importar" class="hidden">
+    <div class="page-title">Importar Planilha</div>
+    <div class="card">
+      <p style="color:var(--text2);margin-bottom:8px;font-size:14px;"><strong>Formatos suportados:</strong></p>
+      <ul style="color:var(--text2);font-size:13px;margin-bottom:16px;padding-left:20px;">
+        <li><strong>Ordem de Produção (.xls)</strong> — Cada arquivo = 1 serviço. <span style="font-size:12px;">(Colunas: C=produto, D=quantidade, K=observação, Y=cor, AD=detalhe)</span></li>
+        <li><strong>Controle (.xlsx)</strong> — Cada aba = 1 serviço, com setores (Marcenaria, Lixa, Pintura, Embalagem).</li>
+      </ul>
+      <div class="dropzone" id="dropzone" onclick="document.getElementById('file-input').click()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <p><strong>Clique para selecionar</strong> ou arraste o arquivo aqui</p>
+        <p style="font-size:12px;margin-top:8px;">.xlsx, .xls ou .csv</p>
+      </div>
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(event)">
+      <div id="import-status" class="hidden" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <!-- Relatorio -->
+  <div id="section-relatorio" class="hidden">
+    <div class="page-title">Relatório de Movimentações</div>
+    <div class="table-container card" style="padding:0;">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Usuário</th>
+            <th>Serviço</th>
+            <th>Produto</th>
+            <th>Movimentação</th>
+            <th>Qtd</th>
+            <th>Observação</th>
+          </tr>
+        </thead>
+        <tbody id="relatorio-tbody">
+          <tr><td colspan="7" style="text-align:center;color:var(--text2);">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Move Modal -->
+<div id="move-modal" class="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeMoveModal()">✕</button>
+    <div class="modal-title" id="move-title">Mover Produto</div>
+    <div id="move-product-info" style="font-size:13px;color:var(--text2);margin-bottom:16px;"></div>
+    <div class="current-dist" id="move-current-dist"></div>
+    <form onsubmit="return false;">
+      <div class="form-group"><label>Origem</label><select class="form-select" id="move-origem"></select></div>
+      <div class="form-group"><label>Destino</label><select class="form-select" id="move-destino"></select></div>
+      <div class="form-group"><label>Quantidade</label><input class="form-input" type="number" id="move-qtd" min="1" placeholder="Ex: 2" required></div>
+      <div class="form-group"><label>Data do movimento</label><input class="form-input" type="date" id="move-data"></div>
+      <div class="form-group"><label>Observação (opcional)</label><textarea class="form-textarea" id="move-obs" placeholder="Ex: Não foi possível mover tudo porque..."></textarea></div>
+      <div id="move-error" style="color:var(--red);font-size:13px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeMoveModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmMove()">Mover</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Product Modal -->
+<div id="add-product-modal" class="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAddProductModal()">✕</button>
+    <div class="modal-title">Adicionar Produto</div>
+    <form onsubmit="return false;">
+      <div class="form-group"><label>Produto</label><input class="form-input" id="addp-nome" placeholder="Nome do produto" required></div>
+      <div class="form-group"><label>Quantidade</label><input class="form-input" type="number" id="addp-qtd" value="1" min="1" required></div>
+      <div class="form-group"><label>Cor</label><input class="form-input" id="addp-cor" placeholder="Cor"></div>
+      <div class="form-group"><label>Detalhe</label><input class="form-input" id="addp-detalhe" placeholder="Detalhe"></div>
+      <div class="form-group"><label>Observação</label><textarea class="form-textarea" id="addp-obs" placeholder="Observação"></textarea></div>
+      <div id="addp-error" style="color:var(--red);font-size:13px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeAddProductModal()">Cancelar</button>
+        <button class="btn btn-green" onclick="confirmAddProduct()">Adicionar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Rename Service Modal -->
+<div id="rename-modal" class="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeRenameModal()">✕</button>
+    <div class="modal-title">Editar Nome do Serviço</div>
+    <form onsubmit="return false;">
+      <div class="form-group"><label>Nome</label><input class="form-input" id="rename-nome" required></div>
+      <div id="rename-error" style="color:var(--red);font-size:13px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeRenameModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmRename()">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div id="edit-product-modal" class="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeEditProductModal()">✕</button>
+    <div class="modal-title">Editar Produto</div>
+    <form onsubmit="return false;">
+      <div class="form-group"><label>Produto</label><input class="form-input" id="editp-nome" required></div>
+      <div class="form-group"><label>Quantidade</label><input class="form-input" type="number" id="editp-qtd" min="1" required></div>
+      <div class="form-group"><label>Cor</label><input class="form-input" id="editp-cor"></div>
+      <div class="form-group"><label>Detalhe</label><textarea class="form-textarea" id="editp-detalhe" rows="2"></textarea></div>
+      <div class="form-group"><label>Observação</label><textarea class="form-textarea" id="editp-obs" rows="2"></textarea></div>
+      <div id="editp-error" style="color:var(--red);font-size:13px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeEditProductModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmEditProduct()">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Observation Edit Modal -->
+<div id="edit-obs-modal" class="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeEditObsModal()">✕</button>
+    <div class="modal-title">Editar Observação</div>
+    <form onsubmit="return false;">
+      <div class="form-group"><label>Observação</label><textarea class="form-textarea" id="editobs-text" rows="4"></textarea></div>
+      <div id="editobs-error" style="color:var(--red);font-size:13px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeEditObsModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmEditObs()">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin + '/api';
+const SETORES = ['marcenaria', 'lixa', 'pintura', 'embalagem'];
+const SETOR_LABELS = { marcenaria: 'Marcenaria', lixa: 'Lixa', pintura: 'Pintura', embalagem: 'Embalagem' };
+const SETOR_COLORS = { marcenaria: 'orange', lixa: 'yellow', pintura: 'purple', embalagem: 'green' };
+const ADMIN_EMAIL = 'ronyrosene@gmail.com';
+let currentServicoId = null;
+let moveProdutoId = null;
+let editProdutoId = null;
+let editObsId = null;
+let currentServicoProdutos = [];
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('collapsed');
+  localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed') ? '1' : '');
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type + ' show';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function getToken() { return localStorage.getItem('token'); }
+function getUser() { try { return JSON.parse(localStorage.getItem('user')); } catch { return null; } }
+
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('login-form').classList.add('hidden');
+  document.getElementById('register-form').classList.add('hidden');
+  document.getElementById('auth-error').textContent = '';
+  if (tab === 'login') {
+    document.querySelector('.auth-tab:first-child').classList.add('active');
+    document.getElementById('login-form').classList.remove('hidden');
+  } else {
+    document.querySelector('.auth-tab:last-child').classList.add('active');
+    document.getElementById('register-form').classList.remove('hidden');
+  }
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const err = document.getElementById('auth-error');
+  if (!email || !password) { err.textContent = 'Preencha todos os campos'; return; }
+  try {
+    const res = await fetch(API + '/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.error; return; }
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    initApp();
+  } catch (e) { err.textContent = 'Erro de conexão'; }
+}
+
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const err = document.getElementById('auth-error');
+  if (!name || !email || !password) { err.textContent = 'Preencha todos os campos'; return; }
+  try {
+    const res = await fetch(API + '/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.error; return; }
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    initApp();
+  } catch (e) { err.textContent = 'Erro de conexão'; }
+}
+
+function doLogout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  showAuth();
+}
+
+async function api(path, options) {
+  const token = getToken();
+  const headers = { ...(options?.headers || {}) };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  if (!options || !(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+  const res = await fetch(API + path, { ...options, headers });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Erro na requisição');
+  return data;
+}
+
+function showSection(id) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.main > div[id^="section-"]').forEach(s => s.classList.add('hidden'));
+  const navItem = document.querySelector(`.nav-item[onclick*="'${id}'"]`);
+  if (navItem) navItem.classList.add('active');
+  const section = document.getElementById('section-' + id);
+  if (section) section.classList.remove('hidden');
+  if (id === 'dashboard') loadDashboard();
+  if (id === 'servicos') loadServicos();
+  if (id === 'observacoes') loadObservacoes();
+  if (id === 'relatorio') loadRelatorio();
+}
+
+function initApp() {
+  document.getElementById('auth-section').classList.add('hidden');
+  document.getElementById('sidebar').classList.remove('hidden');
+  document.getElementById('main').classList.remove('hidden');
+  const user = getUser();
+  if (user) document.getElementById('sidebar-user').textContent = user.name || user.email;
+  if (localStorage.getItem('sidebarCollapsed')) {
+    document.getElementById('sidebar').classList.add('collapsed');
+  }
+  showSection('dashboard');
+}
+
+function showAuth() {
+  document.getElementById('auth-section').classList.remove('hidden');
+  document.getElementById('sidebar').classList.add('hidden');
+  document.getElementById('main').classList.add('hidden');
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-password').value = '';
+  document.getElementById('auth-error').textContent = '';
+}
+
+// Dashboard
+async function loadDashboard() {
+  const statsEl = document.getElementById('dash-stats');
+  const listEl = document.getElementById('dash-servicos-list');
+  statsEl.innerHTML = '<div class="loading" style="grid-column:1/-1;">Carregando...</div>';
+  listEl.innerHTML = '';
+  try {
+    const data = await api('/produtos/dashboard');
+    statsEl.innerHTML = `
+      <div class="stat-card card concluidos">
+        <div class="label">Peças em Produção</div>
+        <div class="value">${data.servicos.reduce((a,s) => a + s.total_pecas, 0)}</div>
+      </div>
+      <div class="stat-card card pendentes" onclick="showSection('observacoes')" style="cursor:pointer;">
+        <div class="label">Observações Pendentes</div>
+        <div class="value">${data.observacoes_pendentes}</div>
+      </div>
+    `;
+    if (data.servicos.length === 0) {
+      listEl.innerHTML = '<p style="color:var(--text2);text-align:center;padding:20px;">Nenhum serviço importado. <a href="#" onclick="showSection(\'importar\');return false;" style="color:var(--primary);">Importar planilha</a></p>';
+      return;
+    }
+    listEl.innerHTML = data.servicos.map(s => {
+      const pct = s.total_produtos > 0 ? Math.round((s.produtos_finalizados / s.total_produtos) * 100) : 0;
+      let dias = '';
+      if (s.data_inicio) {
+        const inicio = new Date(s.data_inicio + 'T12:00:00');
+        const hoje = new Date();
+        const diff = Math.floor((hoje - inicio) / (1000*60*60*24));
+        dias = ` · <span style="color:${diff > 30 ? 'var(--red)' : diff > 14 ? 'var(--orange)' : 'var(--text2)'};">${diff} dias</span>`;
+      }
+      return `<div class="service-card" onclick="openServico(${s.servico_id})">
+        <div>
+          <div class="name">${escHtml(s.servico)}</div>
+          <div class="meta">${s.total_produtos} produtos · ${s.total_pecas} peças · ${s.produtos_finalizados} finalizados${dias}</div>
+        </div>
+        <div class="progress">
+          <span style="font-size:13px;color:var(--text2);">${pct}%</span>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('obs-nav-badge').textContent = data.observacoes_pendentes;
+    document.getElementById('obs-nav-badge').classList.toggle('hidden', data.observacoes_pendentes === 0);
+  } catch (e) {
+    statsEl.innerHTML = '<p style="color:var(--red);grid-column:1/-1;">Erro ao carregar dashboard</p>';
+  }
+}
+
+// Observacoes
+async function loadObservacoes() {
+  const listEl = document.getElementById('obs-list');
+  const emptyEl = document.getElementById('obs-empty');
+  listEl.innerHTML = '<div class="loading">Carregando...</div>';
+  emptyEl.classList.add('hidden');
+  try {
+    const obs = await api('/produtos/observacoes');
+    if (obs.length === 0) {
+      listEl.innerHTML = '';
+      emptyEl.classList.remove('hidden');
+      return;
+    }
+    const user = getUser();
+    const isAdmin = user && user.email === ADMIN_EMAIL;
+    listEl.innerHTML = obs.map(o => `
+      <div class="obs-card">
+        <div class="obs-header">
+          <div>
+            <span class="obs-servico">${escHtml(o.servico_nome)}</span>
+            <span style="color:var(--text2);margin:0 6px;">›</span>
+            <span class="obs-produto">${escHtml(o.produto_nome)}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="obs-data">${o.created_at ? new Date(o.created_at + 'Z').toLocaleString('pt-BR') : ''}</div>
+            ${isAdmin ? `<button class="btn btn-sm btn-ghost" onclick="openEditObsModal(${o.id}, '${escHtml(o.observacao).replace(/'/g, "\\'")}')" title="Editar">✎</button>` : ''}
+            ${isAdmin ? `<button class="btn btn-sm btn-red" onclick="confirmDeleteObs(${o.id})" title="Excluir">✕</button>` : ''}
+          </div>
+        </div>
+        <div class="obs-setor">
+          <span class="sector-badge sector-${o.setor}">${SETOR_LABELS[o.setor]}</span>
+          ${o.quantidade > 0 ? `<span style="color:var(--text2);margin-left:8px;">${o.quantidade} unidade(s)</span>` : ''}
+          ${o.data_entrada ? `<span style="color:var(--text2);margin-left:8px;">Entrada: ${o.data_entrada}</span>` : ''}
+          ${o.data_saida ? `<span style="color:var(--text2);margin-left:8px;">Saída: ${o.data_saida}</span>` : ''}
+        </div>
+        <div class="obs-texto">${escHtml(o.observacao)}</div>
+      </div>
+    `).join('');
+  } catch (e) {
+    listEl.innerHTML = '<p style="color:var(--red);">Erro ao carregar observações</p>';
+  }
+}
+
+// Relatorio
+async function loadRelatorio() {
+  const tbody = document.getElementById('relatorio-tbody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text2);">Carregando...</td></tr>';
+  try {
+    const rows = await api('/produtos/relatorio');
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text2);">Nenhuma movimentação registrada.</td></tr>';
+      return;
+    }
+    const labels = { marcenaria: 'Marcenaria', lixa: 'Lixa', pintura: 'Pintura', embalagem: 'Embalagem' };
+    tbody.innerHTML = rows.map(r => {
+      const data = r.created_at ? new Date(r.created_at + 'Z').toLocaleString('pt-BR') : '';
+      return `<tr>
+        <td style="white-space:nowrap;font-size:12px;">${data}</td>
+        <td>${escHtml(r.user_name || '—')}</td>
+        <td>${escHtml(r.servico_nome)}</td>
+        <td>${escHtml(r.produto_nome)}</td>
+        <td><span class="sector-badge sector-${r.setor}">${labels[r.setor] || r.setor}</span> ${r.quantidade > 0 ? r.quantidade + ' un' : '0'}</td>
+        <td style="text-align:center;">${r.quantidade}</td>
+        <td style="font-size:12px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(r.observacao)}">${escHtml(r.observacao) || '-'}</td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--red);">Erro: ' + e.message + '</td></tr>';
+  }
+}
+
+// Servicos
+async function loadServicos() {
+  const listEl = document.getElementById('servicos-list');
+  const emptyEl = document.getElementById('servicos-empty');
+  listEl.innerHTML = '<div class="loading">Carregando...</div>';
+  emptyEl.classList.add('hidden');
+  try {
+    const servicos = await api('/servicos');
+    if (servicos.length === 0) {
+      listEl.innerHTML = '';
+      emptyEl.classList.remove('hidden');
+      return;
+    }
+    listEl.innerHTML = servicos.map(s => {
+      const pct = s.total_produtos > 0 ? Math.round((s.produtos_finalizados / s.total_produtos) * 100) : 0;
+      return `<div class="service-card" onclick="openServico(${s.id})">
+        <div>
+          <div class="name">${escHtml(s.nome)}</div>
+          <div class="meta">${s.total_produtos} produtos · ${s.total_pecas} peças · ${new Date(s.created_at).toLocaleDateString('pt-BR')}</div>
+        </div>
+        <div class="progress">
+          <span style="font-size:13px;color:var(--text2);">${pct}%</span>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    listEl.innerHTML = '<p style="color:var(--red);">Erro ao carregar serviços</p>';
+  }
+}
+
+// Servico Detail
+async function openServico(id) {
+  currentServicoId = id;
+  const user = getUser();
+  const isAdmin = user && user.email === ADMIN_EMAIL;
+  document.getElementById('btn-delete-servico').classList.toggle('hidden', !isAdmin);
+  document.getElementById('btn-add-produto').classList.toggle('hidden', !isAdmin);
+  document.getElementById('detail-tbody').innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text2);">Carregando...</td></tr>';
+  showSection('servico-detail');
+  try {
+    const s = await api('/servicos/' + id);
+    document.getElementById('detail-title').textContent = 'Serviço: ' + s.nome;
+    document.getElementById('detail-data-inicio').value = s.data_inicio || '';
+    const statsEl = document.getElementById('detail-stats');
+    const totPecas = s.produtos.reduce((a, p) => a + p.qtd_total, 0);
+    let finalized = 0;
+    s.produtos.forEach(p => {
+      if (p.movimentacoes.some(m => m.setor === 'embalagem' && m.quantidade > 0)) finalized++;
+    });
+    statsEl.innerHTML = `
+      <div class="stat-card card concluidos">
+        <div class="label">Produtos</div>
+        <div class="value">${s.produtos.length}</div>
+      </div>
+      <div class="stat-card card pendentes">
+        <div class="label">Finalizados</div>
+        <div class="value">${finalized}</div>
+      </div>
+    `;
+    const tbody = document.getElementById('detail-tbody');
+    currentServicoProdutos = s.produtos;
+    const user = getUser();
+    const isAdmin = user && user.email === ADMIN_EMAIL;
+    tbody.innerHTML = s.produtos.map(p => {
+      const qtds = { marcenaria: 0, lixa: 0, pintura: 0, embalagem: 0 };
+      p.movimentacoes.forEach(m => { qtds[m.setor] = m.quantidade; });
+      const estoqueChecked = p.em_estoque ? 'checked' : '';
+      const nomeEsc = escHtml(p.nome).replace(/'/g, "\\'");
+      return `<tr${p.em_estoque ? ' style="background:rgba(34,197,94,.05);"' : ''}>
+        <td><strong>${escHtml(p.nome)}</strong></td>
+        <td>${escHtml(p.cor)}</td>
+        <td style="color:var(--text2);" title="${escHtml(p.detalhe)}">${escHtml(p.detalhe)}</td>
+        <td style="color:var(--text2);" title="${escHtml(p.observacao)}">${escHtml(p.observacao) || '-'}</td>
+        <td><input type="checkbox" class="checkbox-estoque" ${estoqueChecked} onchange="toggleEstoque(${p.id}, this.checked)"></td>
+        <td><strong>${p.qtd_total}</strong></td>
+        ${SETORES.map(st => `<td>${qtds[st] > 0 ? '<span class="sector-badge sector-' + st + '">' + qtds[st] + '</span>' : '-'}</td>`).join('')}
+        <td style="white-space:nowrap;">
+          ${isAdmin ? `<button class="btn btn-sm btn-ghost" onclick="openEditProductModal(${p.id})" title="Editar">✎</button>` : ''}
+          <button class="btn btn-sm btn-primary" onclick="openMoveModal(${p.id}, '${nomeEsc}')">Mover</button>
+          ${isAdmin ? `<button class="btn btn-sm btn-red" onclick="confirmDeleteProduct(${p.id})" title="Excluir">✕</button>` : ''}
+        </td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('detail-tbody').innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--red);">Erro: ' + e.message + '</td></tr>';
+  }
+}
+
+// Estoque toggle
+async function toggleEstoque(produtoId, checked) {
+  try {
+    await api('/produtos/' + produtoId + '/estoque', { method: 'PUT' });
+  } catch (e) {
+    showToast('Erro ao atualizar estoque', 'error');
+  }
+}
+
+// Edit Product
+function openEditProductModal(produtoId) {
+  editProdutoId = produtoId;
+  const prod = currentServicoProdutos.find(p => p.id === produtoId);
+  if (!prod) { showToast('Produto não encontrado', 'error'); return; }
+  document.getElementById('editp-nome').value = prod.nome || '';
+  document.getElementById('editp-qtd').value = prod.qtd_total || 1;
+  document.getElementById('editp-cor').value = prod.cor || '';
+  document.getElementById('editp-detalhe').value = prod.detalhe || '';
+  document.getElementById('editp-obs').value = prod.observacao || '';
+  document.getElementById('editp-error').textContent = '';
+  document.getElementById('edit-product-modal').classList.add('open');
+}
+function closeEditProductModal() { document.getElementById('edit-product-modal').classList.remove('open'); editProdutoId = null; }
+async function confirmEditProduct() {
+  const nome = document.getElementById('editp-nome').value.trim();
+  const qtd_total = parseInt(document.getElementById('editp-qtd').value) || 1;
+  const cor = document.getElementById('editp-cor').value.trim();
+  const detalhe = document.getElementById('editp-detalhe').value.trim();
+  const observacao = document.getElementById('editp-obs').value.trim();
+  const errEl = document.getElementById('editp-error');
+  if (!nome) { errEl.textContent = 'Nome é obrigatório'; return; }
+  try {
+    await api('/produtos/' + editProdutoId + '/editar', {
+      method: 'PUT',
+      body: JSON.stringify({ nome, qtd_total, cor, detalhe, observacao }),
+    });
+    closeEditProductModal();
+    showToast('Produto atualizado!', 'success');
+    openServico(currentServicoId);
+  } catch (e) { errEl.textContent = e.message; }
+}
+
+// Delete Product
+async function confirmDeleteProduct(produtoId) {
+  if (!confirm('Tem certeza que deseja excluir este produto? Todas as movimentações serão removidas.')) return;
+  try {
+    await api('/produtos/' + produtoId, { method: 'DELETE' });
+    showToast('Produto excluído!', 'success');
+    openServico(currentServicoId);
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+// Observation Edit
+function openEditObsModal(id, texto) {
+  editObsId = id;
+  document.getElementById('editobs-text').value = texto;
+  document.getElementById('editobs-error').textContent = '';
+  document.getElementById('edit-obs-modal').classList.add('open');
+}
+function closeEditObsModal() { document.getElementById('edit-obs-modal').classList.remove('open'); editObsId = null; }
+async function confirmEditObs() {
+  const observacao = document.getElementById('editobs-text').value.trim();
+  try {
+    await api('/produtos/observacoes/' + editObsId, {
+      method: 'PUT',
+      body: JSON.stringify({ observacao }),
+    });
+    closeEditObsModal();
+    showToast('Observação atualizada!', 'success');
+    refreshObsBadge();
+    loadObservacoes();
+  } catch (e) { document.getElementById('editobs-error').textContent = e.message; }
+}
+
+async function refreshObsBadge() {
+  try { const d = await api('/produtos/dashboard'); document.getElementById('obs-nav-badge').textContent = d.observacoes_pendentes; document.getElementById('obs-nav-badge').classList.toggle('hidden', d.observacoes_pendentes === 0); } catch {}
+}
+
+// Observation Delete
+async function confirmDeleteObs(id) {
+  if (!confirm('Remover esta observação?')) return;
+  try {
+    await api('/produtos/observacoes/' + id, { method: 'DELETE' });
+    showToast('Observação removida!', 'success');
+    refreshObsBadge();
+    loadObservacoes();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function updateDataInicio(val) {
+  try {
+    await api('/servicos/' + currentServicoId, { method: 'PUT', body: JSON.stringify({ data_inicio: val || null }) });
+    showToast('Data de início atualizada!', 'success');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+// Delete Service
+async function confirmDeleteServico() {
+  if (!confirm('Tem certeza que deseja excluir este serviço? Todos os produtos e movimentações serão removidos permanentemente.')) return;
+  try {
+    await api('/servicos/' + currentServicoId, { method: 'DELETE' });
+    showToast('Serviço excluído!', 'success');
+    showSection('servicos');
+    loadServicos();
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// Rename Service
+function openRenameModal() {
+  document.getElementById('rename-nome').value = document.getElementById('detail-title').textContent.replace('Serviço: ', '');
+  document.getElementById('rename-error').textContent = '';
+  document.getElementById('rename-modal').classList.add('open');
+}
+function closeRenameModal() { document.getElementById('rename-modal').classList.remove('open'); }
+async function confirmRename() {
+  const nome = document.getElementById('rename-nome').value.trim();
+  const errEl = document.getElementById('rename-error');
+  if (!nome) { errEl.textContent = 'Nome é obrigatório'; return; }
+  try {
+    await api('/servicos/' + currentServicoId, { method: 'PUT', body: JSON.stringify({ nome }) });
+    closeRenameModal();
+    showToast('Serviço renomeado!', 'success');
+    openServico(currentServicoId);
+  } catch (e) { errEl.textContent = e.message; }
+}
+
+// Add Product
+function openAddProductModal() {
+  document.getElementById('addp-nome').value = '';
+  document.getElementById('addp-qtd').value = '1';
+  document.getElementById('addp-cor').value = '';
+  document.getElementById('addp-detalhe').value = '';
+  document.getElementById('addp-obs').value = '';
+  document.getElementById('addp-error').textContent = '';
+  document.getElementById('add-product-modal').classList.add('open');
+}
+function closeAddProductModal() { document.getElementById('add-product-modal').classList.remove('open'); }
+async function confirmAddProduct() {
+  const nome = document.getElementById('addp-nome').value.trim();
+  const qtd_total = parseInt(document.getElementById('addp-qtd').value) || 1;
+  const cor = document.getElementById('addp-cor').value.trim();
+  const detalhe = document.getElementById('addp-detalhe').value.trim();
+  const observacao = document.getElementById('addp-obs').value.trim();
+  const errEl = document.getElementById('addp-error');
+  if (!nome) { errEl.textContent = 'Nome do produto é obrigatório'; return; }
+  try {
+    await api('/produtos', {
+      method: 'POST',
+      body: JSON.stringify({ servico_id: currentServicoId, nome, qtd_total, cor, detalhe, observacao }),
+    });
+    closeAddProductModal();
+    showToast('Produto adicionado!', 'success');
+    openServico(currentServicoId);
+  } catch (e) { errEl.textContent = e.message; }
+}
+
+// Move Modal
+async function openMoveModal(produtoId, nome) {
+  moveProdutoId = produtoId;
+  document.getElementById('move-title').textContent = 'Mover: ' + nome;
+  document.getElementById('move-product-info').textContent = 'Produto #' + produtoId;
+  document.getElementById('move-error').textContent = '';
+  document.getElementById('move-qtd').value = '';
+  document.getElementById('move-obs').value = '';
+  document.getElementById('move-data').value = new Date().toISOString().split('T')[0];
+  try {
+    const s = await api('/servicos/' + currentServicoId);
+    const prod = s.produtos.find(p => p.id === produtoId);
+    if (!prod) throw new Error('Produto não encontrado');
+    const dist = document.getElementById('move-current-dist');
+    const qtds = { marcenaria: 0, lixa: 0, pintura: 0, embalagem: 0 };
+    prod.movimentacoes.forEach(m => { qtds[m.setor] = m.quantidade; });
+    dist.innerHTML = SETORES.map(st => '<div class="dist-item"><div class="sector-name">' + SETOR_LABELS[st] + '</div><div class="sector-qty" style="color:var(--' + SETOR_COLORS[st] + ');">' + qtds[st] + '</div></div>').join('');
+    const origem = document.getElementById('move-origem');
+    const destino = document.getElementById('move-destino');
+    origem.innerHTML = SETORES.filter(st => qtds[st] > 0).map(st => '<option value="' + st + '">' + SETOR_LABELS[st] + ' (' + qtds[st] + ')</option>').join('');
+    destino.innerHTML = SETORES.map(st => '<option value="' + st + '">' + SETOR_LABELS[st] + '</option>').join('');
+    if (qtds.lixa > 0) origem.value = 'lixa';
+    else if (qtds.marcenaria > 0) origem.value = 'marcenaria';
+    document.getElementById('move-modal').classList.add('open');
+  } catch (e) {
+    document.getElementById('move-error').textContent = e.message;
+  }
+}
+function closeMoveModal() { document.getElementById('move-modal').classList.remove('open'); moveProdutoId = null; }
+async function confirmMove() {
+  const quantidade = parseInt(document.getElementById('move-qtd').value);
+  const setor_origem = document.getElementById('move-origem').value;
+  const setor_destino = document.getElementById('move-destino').value;
+  const data_movimento = document.getElementById('move-data').value;
+  const observacao = document.getElementById('move-obs').value.trim();
+  const errEl = document.getElementById('move-error');
+  errEl.textContent = '';
+  if (!quantidade || quantidade <= 0) { errEl.textContent = 'Quantidade inválida'; return; }
+  if (setor_origem === setor_destino) { errEl.textContent = 'Origem e destino devem ser diferentes'; return; }
+  try {
+    await api('/produtos/' + moveProdutoId + '/mover', {
+      method: 'PUT',
+      body: JSON.stringify({ quantidade, setor_origem, setor_destino, data_movimento, observacao }),
+    });
+    closeMoveModal();
+    showToast('Movimentação realizada com sucesso!', 'success');
+    openServico(currentServicoId);
+  } catch (e) { errEl.textContent = e.message; }
+}
+
+// File Import
+function handleFileSelect(e) { const file = e.target.files[0]; if (file) uploadFile(file); }
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('dragover'); const file = e.dataTransfer.files[0]; if (file) uploadFile(file); });
+async function uploadFile(file) {
+  const status = document.getElementById('import-status');
+  status.classList.remove('hidden');
+  status.innerHTML = '<p style="color:var(--text2);">Enviando e processando...</p>';
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const data = await api('/servicos/import', { method: 'POST', body: formData });
+    status.innerHTML = '<p style="color:var(--green);">✅ Importado com sucesso!</p><ul style="margin-top:8px;font-size:13px;color:var(--text2);">' + data.imported.map(i => '<li>' + escHtml(i.servico) + ': ' + i.produtos_count + ' produtos</li>').join('') + '</ul>';
+    document.getElementById('file-input').value = '';
+    showToast(data.imported.length + ' serviço(s) importado(s)!', 'success');
+  } catch (e) { status.innerHTML = '<p style="color:var(--red);">❌ Erro: ' + e.message + '</p>'; }
+}
+
+function escHtml(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+(function() { if (getToken()) initApp(); else showAuth(); })();
+</script>
+</body>
+</html>
