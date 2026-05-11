@@ -718,7 +718,7 @@ const SETORES = ['marcenaria', 'lixa', 'pintura', 'embalagem'];
 const SETOR_LABELS = { marcenaria: 'Marcenaria', lixa: 'Lixa', pintura: 'Pintura', embalagem: 'Embalagem' };
 const SETOR_COLORS = { marcenaria: 'orange', lixa: 'yellow', pintura: 'purple', embalagem: 'green' };
 const ADMIN_EMAILS = ['ronyrosene@gmail.com', 'pcp@moveispelinson.com.br'];
-function isAdmin(email) { return ADMIN_EMAILS.includes(email); }
+function isAdminEmail(email) { return ADMIN_EMAILS.includes(email); }
 let currentServicoId = null;
 let moveProdutoId = null;
 let editProdutoId = null;
@@ -903,7 +903,7 @@ async function loadObservacoes() {
       return;
     }
     const user = getUser();
-    const isAdmin = user && isAdmin(user.email);
+    const isAdmin = user && isAdminEmail(user.email);
     listEl.innerHTML = obs.map(o => `
       <div class="obs-card">
         <div class="obs-header">
@@ -995,7 +995,7 @@ async function loadServicos() {
 async function openServico(id) {
   currentServicoId = id;
   const user = getUser();
-  const isAdmin = user && isAdmin(user.email);
+  const isAdmin = user && isAdminEmail(user.email);
   document.getElementById('btn-rename-servico').classList.toggle('hidden', !isAdmin);
   document.getElementById('btn-delete-servico').classList.toggle('hidden', !isAdmin);
   document.getElementById('btn-add-produto').classList.toggle('hidden', !isAdmin);
@@ -1023,7 +1023,7 @@ async function openServico(id) {
     const tbody = document.getElementById('detail-tbody');
     currentServicoProdutos = s.produtos;
     const user = getUser();
-    const isAdmin = user && isAdmin(user.email);
+    const isAdmin = user && isAdminEmail(user.email);
     tbody.innerHTML = s.produtos.map(p => {
       const qtds = { marcenaria: 0, lixa: 0, pintura: 0, embalagem: 0 };
       p.movimentacoes.forEach(m => { qtds[m.setor] = m.quantidade; });
