@@ -5,6 +5,7 @@ const { auth } = require('../middleware/auth');
 const router = express.Router();
 
 const SETORES_ORDEM = ['marcenaria', 'lixa', 'pintura', 'embalagem'];
+const ADMIN_EMAILS_PRODUTOS = ['ronyrosene@gmail.com', 'pcp@moveispelinson.com.br'];
 
 router.put('/:id/mover', auth, (req, res) => {
   try {
@@ -95,8 +96,8 @@ router.put('/:id/mover', auth, (req, res) => {
 router.put('/:id/editar', auth, (req, res) => {
   try {
     const user = get('SELECT email FROM users WHERE id = ?', [req.userId]);
-    if (!user || user.email !== 'ronyrosene@gmail.com') {
-      return res.status(403).json({ error: 'Apenas o usuário autorizado pode realizar esta operação' });
+    if (!user || !ADMIN_EMAILS_PRODUTOS.includes(user.email)) {
+      return res.status(403).json({ error: 'Apenas usuários autorizados podem realizar esta operação' });
     }
     const { nome, cor, detalhe, observacao, qtd_total } = req.body;
     const produtoId = Number(req.params.id);
@@ -153,8 +154,8 @@ router.put('/:id/estoque', auth, (req, res) => {
 router.delete('/:id', auth, (req, res) => {
   try {
     const user = get('SELECT email FROM users WHERE id = ?', [req.userId]);
-    if (!user || user.email !== 'ronyrosene@gmail.com') {
-      return res.status(403).json({ error: 'Apenas o usuário autorizado pode realizar esta operação' });
+    if (!user || !ADMIN_EMAILS_PRODUTOS.includes(user.email)) {
+      return res.status(403).json({ error: 'Apenas usuários autorizados podem realizar esta operação' });
     }
     const produtoId = Number(req.params.id);
     const prod = get('SELECT id FROM produtos WHERE id = ?', [produtoId]);
@@ -169,8 +170,8 @@ router.delete('/:id', auth, (req, res) => {
 router.post('/', auth, (req, res) => {
   try {
     const user = get('SELECT email FROM users WHERE id = ?', [req.userId]);
-    if (!user || user.email !== 'ronyrosene@gmail.com') {
-      return res.status(403).json({ error: 'Apenas o usuário autorizado pode realizar esta operação' });
+    if (!user || !ADMIN_EMAILS_PRODUTOS.includes(user.email)) {
+      return res.status(403).json({ error: 'Apenas usuários autorizados podem realizar esta operação' });
     }
     const { servico_id, nome, cor, detalhe, observacao, qtd_total } = req.body;
     if (!servico_id || !nome) {

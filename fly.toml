@@ -1,4 +1,4 @@
-﻿# fly.toml - Generated for controle-producao
+# fly.toml - Generated for controle-producao
 app = "controle-producao"
 primary_region = "gru"
 

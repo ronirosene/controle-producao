@@ -185,8 +185,14 @@ router.get('/:id', auth, (req, res) => {
   }
 });
 
+const ADMIN_EMAILS_SERVICOS = ['ronyrosene@gmail.com', 'pcp@moveispelinson.com.br'];
+
 router.put('/:id', auth, (req, res) => {
   try {
+    const user = req.userId && get('SELECT email FROM users WHERE id = ?', [req.userId]);
+    if (!user || !ADMIN_EMAILS_SERVICOS.includes(user.email)) {
+      return res.status(403).json({ error: 'Apenas usuários autorizados podem editar o serviço' });
+    }
     const { nome, data_inicio } = req.body;
     const updates = [];
     const values = [];
@@ -214,8 +220,8 @@ router.put('/:id', auth, (req, res) => {
 router.delete('/:id', auth, (req, res) => {
   try {
     const user = get('SELECT email FROM users WHERE id = ?', [req.userId]);
-    if (!user || user.email !== 'ronyrosene@gmail.com') {
-      return res.status(403).json({ error: 'Apenas o usuário autorizado pode excluir serviços' });
+    if (!user || !ADMIN_EMAILS_SERVICOS.includes(user.email)) {
+      return res.status(403).json({ error: 'Apenas usuários autorizados podem excluir serviços' });
     }
     const result = query(
       'DELETE FROM servicos WHERE id = ?',
