@@ -213,6 +213,8 @@ tr:hover td { background: rgba(59,130,246,.03); }
 .detail-table td:nth-child(10) { width: 5%; text-align: center; }
 .detail-table th:nth-child(11),
 .detail-table td:nth-child(11) { width: 13%; text-align: center; }
+.sector-header-row td { padding: 8px 12px !important; background: rgba(255,255,255,.03); border-bottom: 1px solid var(--border); }
+.sector-header-label { font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); text-align: center; }
 .sector-badge {
   display: inline-block;
   padding: 2px 8px;
@@ -224,6 +226,17 @@ tr:hover td { background: rgba(59,130,246,.03); }
 .sector-lixa { background: rgba(234,179,8,.15); color: var(--yellow); }
 .sector-pintura { background: rgba(168,85,247,.15); color: var(--purple); }
 .sector-embalagem { background: rgba(34,197,94,.15); color: var(--green); }
+.obs-indicator {
+  display: inline-block;
+  margin-left: 4px;
+  color: var(--orange);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  vertical-align: middle;
+  transition: opacity .2s;
+}
+.obs-indicator:hover { opacity: .7; }
 .form-group { margin-bottom: 16px; }
 .form-group label { display: block; font-size: 13px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
 .form-input, .form-select, .form-textarea {
@@ -366,7 +379,9 @@ tr:hover td { background: rgba(59,130,246,.03); }
 .progress-bar { width: 120px; height: 6px; background: var(--bg2); border-radius: 3px; overflow: hidden; }
 .progress-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width .3s; }
 .action-row { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
-.loading { text-align: center; padding: 40px; color: var(--text2); }
+.loading { text-align: center; padding: 40px; color: var(--text2); display: flex; align-items: center; justify-content: center; gap: 10px; }
+.loading::before { content: ''; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .back-btn {
   display: inline-flex;
   align-items: center;
@@ -440,6 +455,202 @@ tr:hover td { background: rgba(59,130,246,.03); }
   .action-row { gap: 6px; }
   .btn-sm { padding: 4px 8px; font-size: 11px; }
 }
+
+/* === MOBILE BOTTOM NAV === */
+.mobile-header { display: none; }
+.bottom-nav { display: none; }
+.mobile-overlay { display: none; }
+
+@media (max-width: 768px) {
+  body { padding-bottom: 64px; }
+  .mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 48px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    z-index: 99;
+    padding: 0 12px;
+  }
+  .mobile-header-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .mobile-hamburger {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text);
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    font-size: 22px;
+    transition: background .2s;
+  }
+  .mobile-hamburger:hover { background: var(--card); }
+  .mobile-header-user {
+    font-size: 12px;
+    color: var(--text2);
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    z-index: 99;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    justify-content: space-around;
+  }
+  .bn-item {
+    flex: 1;
+    text-align: center;
+    padding: 6px 2px 4px;
+    cursor: pointer;
+    color: var(--text2);
+    transition: all .2s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    position: relative;
+  }
+  .bn-item.active { color: var(--primary); }
+  .bn-item svg {
+    display: block;
+    margin: 0 auto 1px;
+    width: 22px; height: 22px;
+  }
+  .bn-item span { font-size: 10px; display: block; }
+  .bn-badge {
+    position: absolute;
+    top: 2px;
+    right: 50%;
+    margin-right: -16px;
+    background: var(--orange);
+    color: #000;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 10px;
+    line-height: 1.3;
+  }
+
+  /* Adjust main content for mobile header */
+  .main { margin-left: 0; padding: 56px 10px 12px; }
+
+  /* Sidebar overlay on mobile */
+  .sidebar {
+    transform: translateX(-100%);
+    width: 280px;
+    z-index: 200;
+    transition: transform .25s ease;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar.collapsed { transform: translateX(-100%); width: 280px; }
+  .sidebar.collapsed.open { transform: translateX(0); width: 280px; }
+  .sidebar.collapsed.open .sidebar-logo span { display: inline; }
+  .sidebar.collapsed.open .nav-item { justify-content: flex-start; padding: 10px 14px; gap: 10px; }
+  .sidebar.collapsed.open .nav-item span { display: inline; }
+  .sidebar.collapsed.open .sidebar-footer { display: block; }
+  .sidebar.collapsed + .main { margin-left: 0; }
+
+  .sidebar-open .mobile-overlay {
+    display: block;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 150;
+  }
+
+  /* Tables as cards on small screens */
+  @media (max-width: 600px) {
+    .table-container table,
+    .table-container thead,
+    .table-container tbody,
+    .table-container tr,
+    .table-container td,
+    .detail-table, .detail-table thead,
+    .detail-table tbody, .detail-table tr,
+    .detail-table td {
+      display: block;
+    }
+    .table-container thead { display: none; }
+    .detail-table thead { display: none; }
+    .table-container tr {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .detail-table tr {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .table-container td,
+    .detail-table td {
+      border: none;
+      padding: 4px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      gap: 8px;
+    }
+    .table-container td::before,
+    .detail-table td::before {
+      content: attr(data-label);
+      font-size: 11px;
+      color: var(--text2);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+      flex-shrink: 0;
+    }
+    .table-container tr:hover td { background: transparent; }
+    .detail-table tr:hover td { background: transparent; }
+    .table-container { overflow: visible; }
+    .detail-table-container { overflow: visible; }
+    .detail-table td:nth-child(6),
+    .detail-table td:nth-child(7),
+    .detail-table td:nth-child(8),
+    .detail-table td:nth-child(9),
+    .detail-table td:nth-child(10) {
+      display: inline-flex;
+      gap: 4px;
+    }
+    .sector-header-row td { justify-content: center; padding: 8px 0 !important; }
+    .sector-header-row td::before { display: none; }
+    .checkbox-estoque { width: 20px; height: 20px; }
+  }
+
+  /* Full-screen modals on mobile */
+  .modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-title { font-size: 16px; }
+  .modal form { flex: 1; display: flex; flex-direction: column; }
+  .modal form .form-group:last-of-type { flex: 1; }
+  .modal textarea { min-height: 100px; }
+  .current-dist { grid-template-columns: repeat(2, 1fr); }
+}
 </style>
 </head>
 <body>
@@ -456,18 +667,28 @@ tr:hover td { background: rgba(59,130,246,.03); }
     </div>
     <div id="auth-error" class="auth-error"></div>
     <form id="login-form" onsubmit="return false;">
-      <div class="form-group"><label>Email</label><input class="form-input" type="email" id="login-email" placeholder="seu@email.com" required></div>
-      <div class="form-group"><label>Senha</label><input class="form-input" type="password" id="login-password" placeholder="••••••••" required></div>
+      <div class="form-group"><label>Email</label><input class="form-input" type="email" id="login-email" placeholder="seu@email.com" required onkeydown="if(event.key==='Enter'){event.preventDefault();doLogin()}"></div>
+      <div class="form-group"><label>Senha</label><input class="form-input" type="password" id="login-password" placeholder="••••••••" required onkeydown="if(event.key==='Enter'){event.preventDefault();doLogin()}"></div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doLogin()">Entrar</button>
     </form>
     <form id="register-form" class="hidden" onsubmit="return false;">
-      <div class="form-group"><label>Nome</label><input class="form-input" type="text" id="reg-name" placeholder="Seu nome" required></div>
-      <div class="form-group"><label>Email</label><input class="form-input" type="email" id="reg-email" placeholder="seu@email.com" required></div>
-      <div class="form-group"><label>Senha</label><input class="form-input" type="password" id="reg-password" placeholder="••••••••" required minlength="6"></div>
+      <div class="form-group"><label>Nome</label><input class="form-input" type="text" id="reg-name" placeholder="Seu nome" required onkeydown="if(event.key==='Enter'){event.preventDefault();doRegister()}"></div>
+      <div class="form-group"><label>Email</label><input class="form-input" type="email" id="reg-email" placeholder="seu@email.com" required onkeydown="if(event.key==='Enter'){event.preventDefault();doRegister()}"></div>
+      <div class="form-group"><label>Senha</label><input class="form-input" type="password" id="reg-password" placeholder="••••••••" required minlength="6" onkeydown="if(event.key==='Enter'){event.preventDefault();doRegister()}"></div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doRegister()">Cadastrar</button>
     </form>
   </div>
 </div>
+
+<!-- Mobile Header -->
+<div id="mobile-header" class="mobile-header hidden">
+  <button class="mobile-hamburger" onclick="toggleMobileSidebar()" aria-label="Menu">☰</button>
+  <div class="mobile-header-title">Controle Produção</div>
+  <div id="mobile-header-user" class="mobile-header-user"></div>
+</div>
+
+<!-- Mobile Overlay -->
+<div id="mobile-overlay" class="mobile-overlay" onclick="closeMobileSidebar()"></div>
 
 <!-- Sidebar -->
 <div id="sidebar" class="sidebar hidden">
@@ -485,14 +706,22 @@ tr:hover td { background: rgba(59,130,246,.03); }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       <span>Dashboard</span>
     </div>
+    <div class="nav-item" onclick="showSection('urgentes')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      <span>Produtos Urgentes</span>
+    </div>
+    <div class="nav-item" onclick="showSection('servicos')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+      <span>Serviços</span>
+    </div>
     <div class="nav-item" onclick="showSection('observacoes')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
       <span>Observações</span>
       <span id="obs-nav-badge" class="hidden" style="background:var(--orange);color:#000;padding:1px 6px;border-radius:10px;font-size:11px;margin-left:auto;"></span>
     </div>
-    <div class="nav-item" onclick="showSection('servicos')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-      <span>Serviços</span>
+    <div class="nav-item" onclick="showSection('posicao-atual')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span>Posição Atual</span>
     </div>
     <div class="nav-item" onclick="showSection('importar')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -500,12 +729,45 @@ tr:hover td { background: rgba(59,130,246,.03); }
     </div>
     <div class="nav-item" onclick="showSection('relatorio')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-      <span>Relatório</span>
+      <span>Log</span>
+    </div>
+    <div class="nav-item" onclick="showSection('backups')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+      <span>Backups</span>
+    </div>
+    <div class="nav-item hidden admin-only" id="nav-usuarios" onclick="showSection('usuarios');closeMobileSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      <span>Usuários</span>
     </div>
   </div>
   <div class="sidebar-footer">
     <div id="sidebar-user" class="user-info"></div>
     <button class="btn-logout" onclick="doLogout()"><span>Sair</span></button>
+  </div>
+</div>
+
+<!-- Bottom Nav (mobile) -->
+<div id="bottom-nav" class="bottom-nav hidden">
+  <div class="bn-item active" onclick="showSection('dashboard')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    <span>Início</span>
+  </div>
+  <div class="bn-item" onclick="showSection('servicos')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+    <span>Serviços</span>
+  </div>
+  <div class="bn-item" onclick="showSection('observacoes')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+    <span>Obs</span>
+    <span id="bn-badge-obs" class="bn-badge hidden">0</span>
+  </div>
+  <div class="bn-item" onclick="showSection('posicao-atual')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span>Posição</span>
+  </div>
+  <div class="bn-item" onclick="showSection('urgentes')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+    <span>Urgentes</span>
   </div>
 </div>
 
@@ -515,6 +777,7 @@ tr:hover td { background: rgba(59,130,246,.03); }
   <!-- Dashboard -->
   <div id="section-dashboard" class="hidden">
     <div class="page-title">Dashboard</div>
+    <div id="dash-last-update" style="font-size:13px;color:var(--text2);margin-bottom:16px;padding:8px 12px;background:var(--bg2);border-radius:8px;"></div>
     <div class="grid-2" id="dash-stats"></div>
     <div class="card" style="margin-bottom:16px;">
       <h3 style="margin-bottom:16px;font-size:16px;">Serviços</h3>
@@ -525,6 +788,10 @@ tr:hover td { background: rgba(59,130,246,.03); }
   <!-- Observacoes -->
   <div id="section-observacoes" class="hidden">
     <div class="page-title">Observações das Movimentações</div>
+    <div id="obs-filter-banner" class="hidden" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:var(--text2);background:var(--bg2);padding:8px 12px;border-radius:8px;">
+      <span id="obs-filter-text"></span>
+      <button class="btn btn-sm btn-ghost" onclick="clearObsFilter()">Limpar filtro ✕</button>
+    </div>
     <div id="obs-list"><div class="loading">Carregando...</div></div>
     <div id="obs-empty" class="hidden" style="text-align:center;padding:40px;color:var(--text2);">Nenhuma observação registrada.</div>
   </div>
@@ -549,7 +816,7 @@ tr:hover td { background: rgba(59,130,246,.03); }
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap;font-size:13px;">
       <label style="color:var(--text2);font-weight:500;">Data início:</label>
-      <input type="date" id="detail-data-inicio" class="form-input form-input-sm" style="width:160px;" onchange="updateDataInicio(this.value)">
+      <input type="date" id="detail-data-inicio" class="form-input form-input-sm" style="width:160px;" onchange="onDataInicioChange(this.value)">
     </div>
     <div class="grid-2" id="detail-stats"></div>
     <div class="table-container detail-table-container card" style="padding:0;margin-top:16px;">
@@ -595,7 +862,7 @@ tr:hover td { background: rgba(59,130,246,.03); }
 
   <!-- Relatorio -->
   <div id="section-relatorio" class="hidden">
-    <div class="page-title">Relatório de Movimentações</div>
+    <div class="page-title">Log de Movimentações</div>
     <div class="table-container card" style="padding:0;">
       <table>
         <thead>
@@ -616,6 +883,167 @@ tr:hover td { background: rgba(59,130,246,.03); }
     </div>
   </div>
 
+  <!-- Posição Atual -->
+  <div id="section-posicao-atual" class="hidden">
+    <div class="page-title">Posição Atual dos Produtos</div>
+    <div class="card" style="padding:12px;margin-bottom:16px;">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <select id="pa-filtro-setor" onchange="loadPosicaoAtual()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;">
+          <option value="">Todos os setores</option>
+          <option value="marcenaria">Marcenaria</option>
+          <option value="lixa">Lixa</option>
+          <option value="pintura">Pintura</option>
+          <option value="embalagem">Embalagem</option>
+        </select>
+        <input id="pa-filtro-servico" type="text" placeholder="Filtrar por serviço..." oninput="loadPosicaoAtual()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;flex:1;min-width:150px;">
+        <input id="pa-filtro-produto" type="text" placeholder="Filtrar por produto..." oninput="loadPosicaoAtual()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;flex:1;min-width:150px;">
+      </div>
+    </div>
+    <div class="table-container card" style="padding:0;">
+      <table>
+        <thead>
+          <tr>
+            <th>Serviço</th>
+            <th>Produto</th>
+            <th>Setor</th>
+            <th>Qtd</th>
+            <th>Dias no Setor</th>
+            <th>Observação</th>
+          </tr>
+        </thead>
+        <tbody id="pa-tbody">
+          <tr><td colspan="6" style="text-align:center;color:var(--text2);">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Produtos Urgentes -->
+  <div id="section-urgentes" class="hidden">
+    <div class="page-title">Produtos Urgentes</div>
+    <div class="card" style="padding:12px;margin-bottom:16px;">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <button class="btn btn-primary" onclick="openAddUrgenteModal()">+ Adicionar Urgência</button>
+        <button class="btn btn-green" onclick="openBatchUrgenteModal()">+ Adicionar em Lote</button>
+        <input id="urg-filtro-servico" type="text" placeholder="Filtrar por serviço..." oninput="loadUrgentes()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;flex:1;min-width:150px;">
+        <input id="urg-filtro-produto" type="text" placeholder="Filtrar por produto..." oninput="loadUrgentes()" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;flex:1;min-width:150px;">
+      </div>
+    </div>
+    <div class="table-container card" style="padding:0;">
+      <table>
+        <thead>
+          <tr>
+            <th>Serviço</th>
+            <th>Produto</th>
+            <th>Data Despacho</th>
+            <th>Dias Restantes</th>
+            <th>Observação</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="urg-tbody">
+          <tr><td colspan="6" style="text-align:center;color:var(--text2);">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Backups -->
+  <div id="section-backups" class="hidden">
+    <div class="page-title">Backups do Banco de Dados</div>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:16px;">Backup automático a cada 3 dias. Apenas administradores podem criar e restaurar backups.</p>
+    <div style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="btn-create-backup" onclick="createBackup()">Criar Backup Agora</button>
+      <button class="btn btn-ghost" id="btn-clean-backup" onclick="cleanBackups()">Limpar Antigos (manter 20)</button>
+    </div>
+    <div class="table-container card" style="padding:0;">
+      <table>
+        <thead>
+          <tr>
+            <th>Arquivo</th>
+            <th>Data</th>
+            <th>Tamanho</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="backups-tbody">
+          <tr><td colspan="4" style="text-align:center;color:var(--text2);">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Usuarios (admin only) -->
+  <div id="section-usuarios" class="hidden">
+    <div class="page-title">Gerenciar Usuários</div>
+    <div style="margin-bottom:16px;">
+      <button class="btn btn-primary" id="btn-add-user" onclick="openAddUserModal()">+ Novo Usuário</button>
+    </div>
+    <div class="table-container card" style="padding:0;">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Criado em</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="usuarios-tbody">
+          <tr><td colspan="4" style="text-align:center;color:var(--text2);">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add User Modal -->
+  <div id="add-user-modal" class="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('add-user-modal')">✕</button>
+      <div class="modal-title">Novo Usuário</div>
+      <div class="form-group">
+        <label>Nome</label>
+        <input type="text" id="adduser-name" class="form-input" placeholder="Nome completo" onkeydown="if(event.key==='Enter'){event.preventDefault();createUser()}">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="adduser-email" class="form-input" placeholder="email@exemplo.com" onkeydown="if(event.key==='Enter'){event.preventDefault();createUser()}">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="adduser-password" class="form-input" placeholder="Senha" onkeydown="if(event.key==='Enter'){event.preventDefault();createUser()}">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeModal('add-user-modal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="createUser()">Criar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div id="edit-user-modal" class="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('edit-user-modal')">✕</button>
+      <div class="modal-title">Editar Usuário</div>
+      <div class="form-group">
+        <label>Nome</label>
+        <input type="text" id="edituser-name" class="form-input" onkeydown="if(event.key==='Enter'){event.preventDefault();saveEditUser()}">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="edituser-email" class="form-input" onkeydown="if(event.key==='Enter'){event.preventDefault();saveEditUser()}">
+      </div>
+      <div class="form-group">
+        <label>Nova Senha (deixe em branco para manter)</label>
+        <input type="password" id="edituser-password" class="form-input" placeholder="Nova senha" onkeydown="if(event.key==='Enter'){event.preventDefault();saveEditUser()}">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeModal('edit-user-modal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveEditUser()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- Move Modal -->
@@ -628,8 +1056,8 @@ tr:hover td { background: rgba(59,130,246,.03); }
     <form onsubmit="return false;">
       <div class="form-group"><label>Origem</label><select class="form-select" id="move-origem"></select></div>
       <div class="form-group"><label>Destino</label><select class="form-select" id="move-destino"></select></div>
-      <div class="form-group"><label>Quantidade</label><input class="form-input" type="number" id="move-qtd" min="1" placeholder="Ex: 2" required></div>
-      <div class="form-group"><label>Data do movimento</label><input class="form-input" type="date" id="move-data"></div>
+      <div class="form-group"><label>Quantidade</label><input class="form-input" type="number" id="move-qtd" min="1" placeholder="Ex: 2" required onkeydown="if(event.key==='Enter'){event.preventDefault();confirmMove()}"></div>
+      <div class="form-group"><label>Data do movimento</label><input class="form-input" type="date" id="move-data" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmMove()}"></div>
       <div class="form-group"><label>Observação (opcional)</label><textarea class="form-textarea" id="move-obs" placeholder="Ex: Não foi possível mover tudo porque..."></textarea></div>
       <div id="move-error" style="color:var(--red);font-size:13px;margin-bottom:8px;"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
@@ -646,10 +1074,10 @@ tr:hover td { background: rgba(59,130,246,.03); }
     <button class="modal-close" onclick="closeAddProductModal()">✕</button>
     <div class="modal-title">Adicionar Produto</div>
     <form onsubmit="return false;">
-      <div class="form-group"><label>Produto</label><input class="form-input" id="addp-nome" placeholder="Nome do produto" required></div>
-      <div class="form-group"><label>Quantidade</label><input class="form-input" type="number" id="addp-qtd" value="1" min="1" required></div>
-      <div class="form-group"><label>Cor</label><input class="form-input" id="addp-cor" placeholder="Cor"></div>
-      <div class="form-group"><label>Detalhe</label><input class="form-input" id="addp-detalhe" placeholder="Detalhe"></div>
+      <div class="form-group"><label>Produto</label><input class="form-input" id="addp-nome" placeholder="Nome do produto" required onkeydown="if(event.key==='Enter'){event.preventDefault();confirmAddProduct()}"></div>
+      <div class="form-group"><label>Quantidade</label><input class="form-input" type="number" id="addp-qtd" value="1" min="1" required onkeydown="if(event.key==='Enter'){event.preventDefault();confirmAddProduct()}"></div>
+      <div class="form-group"><label>Cor</label><input class="form-input" id="addp-cor" placeholder="Cor" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmAddProduct()}"></div>
+      <div class="form-group"><label>Detalhe</label><input class="form-input" id="addp-detalhe" placeholder="Detalhe" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmAddProduct()}"></div>
       <div class="form-group"><label>Observação</label><textarea class="form-textarea" id="addp-obs" placeholder="Observação"></textarea></div>
       <div id="addp-error" style="color:var(--red);font-size:13px;margin-bottom:8px;"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
@@ -666,7 +1094,7 @@ tr:hover td { background: rgba(59,130,246,.03); }
     <button class="modal-close" onclick="closeRenameModal()">✕</button>
     <div class="modal-title">Editar Nome do Serviço</div>
     <form onsubmit="return false;">
-      <div class="form-group"><label>Nome</label><input class="form-input" id="rename-nome" required></div>
+      <div class="form-group"><label>Nome</label><input class="form-input" id="rename-nome" required onkeydown="if(event.key==='Enter'){event.preventDefault();confirmRename()}"></div>
       <div id="rename-error" style="color:var(--red);font-size:13px;margin-bottom:8px;"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
         <button class="btn btn-ghost" onclick="closeRenameModal()">Cancelar</button>
@@ -682,9 +1110,9 @@ tr:hover td { background: rgba(59,130,246,.03); }
     <button class="modal-close" onclick="closeEditProductModal()">✕</button>
     <div class="modal-title">Editar Produto</div>
     <form onsubmit="return false;">
-      <div class="form-group"><label>Produto</label><input class="form-input" id="editp-nome" required></div>
-      <div class="form-group"><label>Quantidade</label><input class="form-input" type="number" id="editp-qtd" min="1" required></div>
-      <div class="form-group"><label>Cor</label><input class="form-input" id="editp-cor"></div>
+      <div class="form-group"><label>Produto</label><input class="form-input" id="editp-nome" required onkeydown="if(event.key==='Enter'){event.preventDefault();confirmEditProduct()}"></div>
+      <div class="form-group"><label>Quantidade</label><input class="form-input" type="number" id="editp-qtd" min="1" required onkeydown="if(event.key==='Enter'){event.preventDefault();confirmEditProduct()}"></div>
+      <div class="form-group"><label>Cor</label><input class="form-input" id="editp-cor" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmEditProduct()}"></div>
       <div class="form-group"><label>Detalhe</label><textarea class="form-textarea" id="editp-detalhe" rows="2"></textarea></div>
       <div class="form-group"><label>Observação</label><textarea class="form-textarea" id="editp-obs" rows="2"></textarea></div>
       <div id="editp-error" style="color:var(--red);font-size:13px;margin-bottom:8px;"></div>
@@ -702,11 +1130,91 @@ tr:hover td { background: rgba(59,130,246,.03); }
     <button class="modal-close" onclick="closeEditObsModal()">✕</button>
     <div class="modal-title">Editar Observação</div>
     <form onsubmit="return false;">
-      <div class="form-group"><label>Observação</label><textarea class="form-textarea" id="editobs-text" rows="4"></textarea></div>
+      <div class="form-group"><label>Observação</label><textarea class="form-textarea" id="editobs-text" rows="4" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();confirmEditObs()}"></textarea></div>
       <div id="editobs-error" style="color:var(--red);font-size:13px;margin-bottom:8px;"></div>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
         <button class="btn btn-ghost" onclick="closeEditObsModal()">Cancelar</button>
         <button class="btn btn-primary" onclick="confirmEditObs()">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Urgente Modal -->
+<div id="add-urgente-modal" class="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAddUrgenteModal()">✕</button>
+    <div class="modal-title">Adicionar Produto Urgente</div>
+    <form onsubmit="return false;">
+      <div class="form-group"><label>Serviço</label>
+        <select class="form-input" id="addurg-servico" onchange="onUrgenteServicoChange()">
+          <option value="">Selecione um serviço...</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Produto</label>
+        <select class="form-input" id="addurg-produto">
+          <option value="">Selecione um produto...</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Data de Despacho</label><input class="form-input" type="date" id="addurg-data" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmAddUrgente()}"></div>
+      <div class="form-group"><label>Observação (opcional)</label><textarea class="form-textarea" id="addurg-obs" rows="2" placeholder="Observação"></textarea></div>
+      <div id="addurg-error" style="color:var(--red);font-size:13px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeAddUrgenteModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmAddUrgente()">Adicionar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Batch Add Urgente Modal -->
+<div id="batch-urgente-modal" class="modal-overlay">
+  <div class="modal" style="max-width:600px;">
+    <button class="modal-close" onclick="closeBatchUrgenteModal()">✕</button>
+    <div class="modal-title">Adicionar Urgência em Lote</div>
+    <form onsubmit="return false;">
+      <div class="form-group"><label>Serviço</label>
+        <select class="form-input" id="batchurg-servico" onchange="onBatchUrgenteServicoChange()">
+          <option value="">Selecione um serviço...</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Data de Despacho (para todos)</label><input class="form-input" type="date" id="batchurg-data" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmBatchUrgente()}"></div>
+      <div class="form-group"><label>Observação (opcional, para todos)</label><textarea class="form-textarea" id="batchurg-obs" rows="2" placeholder="Observação"></textarea></div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;justify-content:space-between;">
+          <span>Produtos</span>
+          <span style="font-size:12px;">
+            <a href="#" onclick="event.preventDefault();batchSelectAll(true)" style="color:var(--primary);">Selecionar todos</a>
+            <span style="color:var(--text2);margin:0 4px;">|</span>
+            <a href="#" onclick="event.preventDefault();batchSelectAll(false)" style="color:var(--text2);">Limpar</a>
+          </span>
+        </label>
+        <div id="batchurg-produtos" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px;">
+          <p style="color:var(--text2);text-align:center;padding:20px;">Selecione um serviço primeiro.</p>
+        </div>
+      </div>
+      <div id="batchurg-error" style="color:var(--red);font-size:13px;margin-bottom:8px;"></div>
+      <div id="batchurg-result" style="color:var(--green);font-size:13px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeBatchUrgenteModal()">Cancelar</button>
+        <button class="btn btn-green" onclick="confirmBatchUrgente()">Adicionar Selecionados</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Urgente Modal -->
+<div id="edit-urgente-modal" class="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeEditUrgenteModal()">✕</button>
+    <div class="modal-title">Editar Urgência</div>
+    <form onsubmit="return false;">
+      <div class="form-group"><label>Data de Despacho</label><input class="form-input" type="date" id="editurg-data" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmEditUrgente()}"></div>
+      <div class="form-group"><label>Observação (opcional)</label><textarea class="form-textarea" id="editurg-obs" rows="2" placeholder="Observação"></textarea></div>
+      <div id="editurg-error" style="color:var(--red);font-size:13px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeEditUrgenteModal()">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmEditUrgente()">Salvar</button>
       </div>
     </form>
   </div>
@@ -724,11 +1232,42 @@ let moveProdutoId = null;
 let editProdutoId = null;
 let editObsId = null;
 let currentServicoProdutos = [];
+let currentObsFilterProdutoId = null;
+let currentEditUrgenteId = null;
+let dataInicioOriginal = '';
+let dataInicioDirty = false;
 
 function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   sidebar.classList.toggle('collapsed');
   localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed') ? '1' : '');
+}
+
+function toggleMobileSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  sidebar.classList.toggle('open');
+  document.body.classList.toggle('sidebar-open');
+}
+
+function closeMobileSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.body.classList.remove('sidebar-open');
+}
+
+function labelTableRows(tbodyId) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  const table = tbody.closest('table');
+  if (!table) return;
+  const headers = table.querySelectorAll('thead th');
+  if (!headers.length) return;
+  const labels = Array.from(headers).map(th => th.textContent.trim());
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const cells = tr.querySelectorAll('td');
+    cells.forEach((td, i) => {
+      if (labels[i]) td.setAttribute('data-label', labels[i]);
+    });
+  });
 }
 
 function showToast(msg, type) {
@@ -741,6 +1280,8 @@ function showToast(msg, type) {
 
 function getToken() { return localStorage.getItem('token'); }
 function getUser() { try { return JSON.parse(localStorage.getItem('user')); } catch { return null; } }
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
 function switchAuthTab(tab) {
   document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
@@ -807,24 +1348,41 @@ async function api(path, options) {
 }
 
 function showSection(id) {
+  if (dataInicioDirty && !confirm('Data início não foi salva. Deseja sair mesmo assim?')) return;
+  dataInicioDirty = false;
+  closeMobileSidebar();
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.bn-item').forEach(n => n.classList.remove('active'));
   document.querySelectorAll('.main > div[id^="section-"]').forEach(s => s.classList.add('hidden'));
   const navItem = document.querySelector(`.nav-item[onclick*="'${id}'"]`);
   if (navItem) navItem.classList.add('active');
+  const bnItem = document.querySelector(`.bn-item[onclick*="'${id}'"]`);
+  if (bnItem) bnItem.classList.add('active');
   const section = document.getElementById('section-' + id);
   if (section) section.classList.remove('hidden');
   if (id === 'dashboard') loadDashboard();
   if (id === 'servicos') loadServicos();
   if (id === 'observacoes') loadObservacoes();
   if (id === 'relatorio') loadRelatorio();
+  if (id === 'posicao-atual') loadPosicaoAtual();
+  if (id === 'backups') loadBackups();
+  if (id === 'usuarios') loadUsuarios();
+  if (id === 'urgentes') loadUrgentes();
 }
 
 function initApp() {
   document.getElementById('auth-section').classList.add('hidden');
   document.getElementById('sidebar').classList.remove('hidden');
   document.getElementById('main').classList.remove('hidden');
+  document.getElementById('mobile-header').classList.remove('hidden');
+  document.getElementById('bottom-nav').classList.remove('hidden');
   const user = getUser();
-  if (user) document.getElementById('sidebar-user').textContent = user.name || user.email;
+  if (user) {
+    document.getElementById('sidebar-user').textContent = user.name || user.email;
+    document.getElementById('mobile-header-user').textContent = user.name || user.email;
+  }
+  const isAdmin = user && isAdminEmail(user.email);
+  document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !isAdmin));
   if (localStorage.getItem('sidebarCollapsed')) {
     document.getElementById('sidebar').classList.add('collapsed');
   }
@@ -835,6 +1393,8 @@ function showAuth() {
   document.getElementById('auth-section').classList.remove('hidden');
   document.getElementById('sidebar').classList.add('hidden');
   document.getElementById('main').classList.add('hidden');
+  document.getElementById('mobile-header').classList.add('hidden');
+  document.getElementById('bottom-nav').classList.add('hidden');
   document.getElementById('login-email').value = '';
   document.getElementById('login-password').value = '';
   document.getElementById('auth-error').textContent = '';
@@ -844,10 +1404,18 @@ function showAuth() {
 async function loadDashboard() {
   const statsEl = document.getElementById('dash-stats');
   const listEl = document.getElementById('dash-servicos-list');
+  const updateEl = document.getElementById('dash-last-update');
   statsEl.innerHTML = '<div class="loading" style="grid-column:1/-1;">Carregando...</div>';
   listEl.innerHTML = '';
+  updateEl.textContent = '';
   try {
     const data = await api('/produtos/dashboard');
+    if (data.ultima_atualizacao) {
+      const dt = new Date(data.ultima_atualizacao.created_at + 'Z');
+      updateEl.textContent = 'Última atualização: ' + dt.toLocaleDateString('pt-BR') + ' às ' + dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ' por ' + (data.ultima_atualizacao.user_name || '—');
+    } else {
+      updateEl.textContent = 'Nenhuma movimentação registrada.';
+    }
     statsEl.innerHTML = `
       <div class="stat-card card concluidos">
         <div class="label">Peças em Produção</div>
@@ -882,8 +1450,11 @@ async function loadDashboard() {
         </div>
       </div>`;
     }).join('');
-    document.getElementById('obs-nav-badge').textContent = data.observacoes_pendentes;
-    document.getElementById('obs-nav-badge').classList.toggle('hidden', data.observacoes_pendentes === 0);
+    const badge = data.observacoes_pendentes;
+    document.getElementById('obs-nav-badge').textContent = badge;
+    document.getElementById('obs-nav-badge').classList.toggle('hidden', badge === 0);
+    document.getElementById('bn-badge-obs').textContent = badge;
+    document.getElementById('bn-badge-obs').classList.toggle('hidden', badge === 0);
   } catch (e) {
     statsEl.innerHTML = '<p style="color:var(--red);grid-column:1/-1;">Erro ao carregar dashboard</p>';
   }
@@ -891,19 +1462,32 @@ async function loadDashboard() {
 
 // Observacoes
 async function loadObservacoes() {
+  const produtoId = currentObsFilterProdutoId;
+  currentObsFilterProdutoId = null;
   const listEl = document.getElementById('obs-list');
   const emptyEl = document.getElementById('obs-empty');
+  const bannerEl = document.getElementById('obs-filter-banner');
+  const bannerText = document.getElementById('obs-filter-text');
   listEl.innerHTML = '<div class="loading">Carregando...</div>';
   emptyEl.classList.add('hidden');
+  bannerEl.classList.add('hidden');
   try {
-    const obs = await api('/produtos/observacoes');
+    const url = produtoId ? '/produtos/observacoes?produto_id=' + produtoId : '/produtos/observacoes';
+    const obs = await api(url);
     if (obs.length === 0) {
       listEl.innerHTML = '';
-      emptyEl.classList.remove('hidden');
+      if (produtoId) {
+        bannerText.textContent = 'Nenhuma observação encontrada para este produto.';
+        bannerEl.classList.remove('hidden');
+      } else {
+        emptyEl.classList.remove('hidden');
+      }
       return;
     }
-    const user = getUser();
-    const isAdmin = user && isAdminEmail(user.email);
+    if (produtoId && obs.length > 0) {
+      bannerText.textContent = 'Mostrando observações de: ' + escHtml(obs[0].produto_nome);
+      bannerEl.classList.remove('hidden');
+    }
     listEl.innerHTML = obs.map(o => `
       <div class="obs-card">
         <div class="obs-header">
@@ -914,8 +1498,8 @@ async function loadObservacoes() {
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
             <div class="obs-data">${o.created_at ? new Date(o.created_at + 'Z').toLocaleString('pt-BR') : ''}</div>
-            ${isAdmin ? `<button class="btn btn-sm btn-ghost" onclick="openEditObsModal(${o.id}, '${escHtml(o.observacao).replace(/'/g, "\\'")}')" title="Editar">✎</button>` : ''}
-            ${isAdmin ? `<button class="btn btn-sm btn-red" onclick="confirmDeleteObs(${o.id})" title="Excluir">✕</button>` : ''}
+            ${`<button class="btn btn-sm btn-ghost" onclick="openEditObsModal(${o.id}, '${escHtml(o.observacao).replace(/'/g, "\\'")}')" title="Editar">✎</button>`}
+            ${`<button class="btn btn-sm btn-red" onclick="confirmDeleteObs(${o.id})" title="Excluir">✕</button>`}
           </div>
         </div>
         <div class="obs-setor">
@@ -955,9 +1539,221 @@ async function loadRelatorio() {
         <td style="font-size:12px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(r.observacao)}">${escHtml(r.observacao) || '-'}</td>
       </tr>`;
     }).join('');
+    labelTableRows('relatorio-tbody');
   } catch (e) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--red);">Erro: ' + e.message + '</td></tr>';
   }
+}
+
+// Posição Atual
+async function loadPosicaoAtual() {
+  const tbody = document.getElementById('pa-tbody');
+  const filtroSetor = document.getElementById('pa-filtro-setor').value;
+  const filtroServico = document.getElementById('pa-filtro-servico').value.toLowerCase();
+  const filtroProduto = document.getElementById('pa-filtro-produto').value.toLowerCase();
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);">Carregando...</td></tr>';
+  try {
+    const rows = await api('/produtos/posicao-atual');
+    const labels = { marcenaria: 'Marcenaria', lixa: 'Lixa', pintura: 'Pintura', embalagem: 'Embalagem' };
+    let filtered = rows;
+    if (filtroSetor) filtered = filtered.filter(r => r.setor === filtroSetor);
+    if (filtroServico) filtered = filtered.filter(r => r.servico_nome.toLowerCase().includes(filtroServico));
+    if (filtroProduto) filtered = filtered.filter(r => r.produto_nome.toLowerCase().includes(filtroProduto));
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);">Nenhum produto encontrado.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = filtered.map(r => {
+      const dias = r.dias_no_setor;
+      let corDias = '';
+      if (dias > 30) corDias = 'color:var(--red);font-weight:600;';
+      else if (dias > 14) corDias = 'color:var(--orange);font-weight:600;';
+      return `<tr>
+        <td>${escHtml(r.servico_nome)}</td>
+        <td>${escHtml(r.produto_nome)}</td>
+        <td><span class="sector-badge sector-${r.setor}">${labels[r.setor] || r.setor}</span></td>
+        <td style="text-align:center;">${r.quantidade}</td>
+        <td style="${corDias}">${dias} dias</td>
+        <td style="font-size:12px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(r.observacao)}">${escHtml(r.observacao) || '-'}</td>
+      </tr>`;
+    }).join('');
+    labelTableRows('pa-tbody');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--red);">Erro: ' + e.message + '</td></tr>';
+  }
+}
+
+// Backups
+async function loadBackups() {
+  const tbody = document.getElementById('backups-tbody');
+  const user = getUser();
+  const isAdmin = user && isAdminEmail(user.email);
+  document.getElementById('btn-create-backup').classList.toggle('hidden', !isAdmin);
+  document.getElementById('btn-clean-backup').classList.toggle('hidden', !isAdmin);
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text2);">Carregando...</td></tr>';
+  try {
+    const list = await api('/backups');
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text2);">Nenhum backup encontrado.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map(b => {
+      const data = new Date(b.created_at + 'Z').toLocaleString('pt-BR');
+      const tamanho = b.size > 1024 * 1024 ? (b.size / 1024 / 1024).toFixed(1) + ' MB' : (b.size / 1024).toFixed(1) + ' KB';
+      return `<tr>
+        <td>${escHtml(b.filename)}</td>
+        <td style="white-space:nowrap;">${data}</td>
+        <td>${tamanho}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-sm btn-primary" onclick="downloadBackup(${b.id})">Download</button>
+          ${isAdmin ? `<button class="btn btn-sm btn-red" onclick="restoreBackup(${b.id})">Restaurar</button>` : ''}
+        </td>
+      </tr>`;
+    }).join('');
+    labelTableRows('backups-tbody');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--red);">Erro: ' + e.message + '</td></tr>';
+  }
+}
+
+async function createBackup() {
+  const btn = document.getElementById('btn-create-backup');
+  btn.disabled = true;
+  btn.textContent = 'Criando...';
+  try {
+    await api('/backups/create', { method: 'POST' });
+    await loadBackups();
+  } catch (e) {
+    alert('Erro ao criar backup: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Criar Backup Agora';
+  }
+}
+
+async function cleanBackups() {
+  if (!confirm('Manter apenas os 20 backups mais recentes e remover os antigos?')) return;
+  const btn = document.getElementById('btn-clean-backup');
+  btn.disabled = true;
+  btn.textContent = 'Limpando...';
+  try {
+    const r = await api('/backups/clean', { method: 'POST' });
+    showToast(r.message, 'success');
+    await loadBackups();
+  } catch (e) {
+    showToast(e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Limpar Antigos (manter 20)';
+  }
+}
+
+async function downloadBackup(id) {
+  try {
+    const resp = await fetch(`/api/backups/${id}/download`, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') }
+    });
+    if (!resp.ok) throw new Error('Erro ao baixar');
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'backup-' + id + '.db';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('Erro ao baixar: ' + e.message);
+  }
+}
+
+async function restoreBackup(id) {
+  if (!confirm('Tem certeza? O banco de dados atual será substituído pelo backup. O servidor precisará ser reiniciado.')) return;
+  try {
+    await api(`/backups/${id}/restore`, { method: 'POST' });
+    alert('Backup restaurado! Reinicie o servidor para aplicar as alterações.');
+    await loadBackups();
+  } catch (e) {
+    alert('Erro ao restaurar backup: ' + e.message);
+  }
+}
+
+let editUserId = null;
+
+async function loadUsuarios() {
+  const tbody = document.getElementById('usuarios-tbody');
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text2);">Carregando...</td></tr>';
+  try {
+    const users = await api('/users');
+    if (users.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text2);">Nenhum usuário.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = users.map(u => {
+      const data = new Date(u.created_at + 'Z').toLocaleString('pt-BR');
+      return `<tr>
+        <td>${escHtml(u.name)}</td>
+        <td>${escHtml(u.email)}</td>
+        <td style="white-space:nowrap;">${data}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-sm btn-ghost" onclick="openEditUserModal(${u.id}, '${escHtml(u.name).replace(/'/g, "\\'")}', '${escHtml(u.email).replace(/'/g, "\\'")}')">✎</button>
+          <button class="btn btn-sm btn-red" onclick="confirmDeleteUser(${u.id}, '${escHtml(u.name).replace(/'/g, "\\'")}')">✕</button>
+        </td>
+      </tr>`;
+    }).join('');
+    labelTableRows('usuarios-tbody');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--red);">Erro: ' + e.message + '</td></tr>';
+  }
+}
+
+function openAddUserModal() {
+  document.getElementById('adduser-name').value = '';
+  document.getElementById('adduser-email').value = '';
+  document.getElementById('adduser-password').value = '';
+  document.getElementById('add-user-modal').classList.add('open');
+}
+
+async function createUser() {
+  const name = document.getElementById('adduser-name').value.trim();
+  const email = document.getElementById('adduser-email').value.trim();
+  const password = document.getElementById('adduser-password').value;
+  if (!name || !email || !password) { alert('Preencha todos os campos'); return; }
+  try {
+    await api('/users', { method: 'POST', body: JSON.stringify({ name, email, password }) });
+    closeModal('add-user-modal');
+    loadUsuarios();
+  } catch (e) { alert('Erro: ' + e.message); }
+}
+
+function openEditUserModal(id, name, email) {
+  editUserId = id;
+  document.getElementById('edituser-name').value = name;
+  document.getElementById('edituser-email').value = email;
+  document.getElementById('edituser-password').value = '';
+  document.getElementById('edit-user-modal').classList.add('open');
+}
+
+async function saveEditUser() {
+  const name = document.getElementById('edituser-name').value.trim();
+  const email = document.getElementById('edituser-email').value.trim();
+  const password = document.getElementById('edituser-password').value;
+  if (!name || !email) { alert('Nome e email obrigatórios'); return; }
+  try {
+    const body = { name, email };
+    if (password) body.password = password;
+    await api('/users/' + editUserId, { method: 'PUT', body: JSON.stringify(body) });
+    closeModal('edit-user-modal');
+    editUserId = null;
+    loadUsuarios();
+  } catch (e) { alert('Erro: ' + e.message); }
+}
+
+async function confirmDeleteUser(id, name) {
+  if (!confirm('Excluir usuário "' + name + '"?')) return;
+  try {
+    await api('/users/' + id, { method: 'DELETE' });
+    loadUsuarios();
+  } catch (e) { alert('Erro: ' + e.message); }
 }
 
 // Servicos
@@ -1000,10 +1796,13 @@ async function openServico(id) {
   document.getElementById('btn-delete-servico').classList.toggle('hidden', !isAdmin);
   document.getElementById('btn-add-produto').classList.toggle('hidden', !isAdmin);
   showSection('servico-detail');
+  document.getElementById('detail-tbody').innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text2);"><div class="loading" style="display:inline-flex;">Carregando...</div></td></tr>';
   try {
     const s = await api('/servicos/' + id);
     document.getElementById('detail-title').textContent = 'Serviço: ' + s.nome;
-    document.getElementById('detail-data-inicio').value = s.data_inicio || '';
+    dataInicioOriginal = s.data_inicio || '';
+    dataInicioDirty = false;
+    document.getElementById('detail-data-inicio').value = dataInicioOriginal;
     const statsEl = document.getElementById('detail-stats');
     const totPecas = s.produtos.reduce((a, p) => a + p.qtd_total, 0);
     let finalized = 0;
@@ -1022,18 +1821,24 @@ async function openServico(id) {
     `;
     const tbody = document.getElementById('detail-tbody');
     currentServicoProdutos = s.produtos;
-    const user = getUser();
-    const isAdmin = user && isAdminEmail(user.email);
+    const SETOR_LABELS = { marcenaria: 'Marcenaria', lixa: 'Lixa', pintura: 'Pintura', embalagem: 'Embalagem' };
+    let lastSector = null;
     tbody.innerHTML = s.produtos.map(p => {
       const qtds = { marcenaria: 0, lixa: 0, pintura: 0, embalagem: 0 };
       p.movimentacoes.forEach(m => { qtds[m.setor] = m.quantidade; });
+      const currentSector = ['marcenaria', 'lixa', 'pintura', 'embalagem'].find(s => qtds[s] > 0) || 'marcenaria';
+      let html = '';
+      if (currentSector !== lastSector) {
+        html += `<tr class="sector-header-row"><td colspan="11" class="sector-header-label">${SETOR_LABELS[currentSector]}</td></tr>`;
+        lastSector = currentSector;
+      }
       const estoqueChecked = p.em_estoque ? 'checked' : '';
       const nomeEsc = escHtml(p.nome).replace(/'/g, "\\'");
-      return `<tr${p.em_estoque ? ' style="background:rgba(34,197,94,.05);"' : ''}>
+      html += `<tr${p.em_estoque ? ' style="background:rgba(34,197,94,.05);"' : ''}>
         <td><strong>${escHtml(p.nome)}</strong></td>
         <td>${escHtml(p.cor)}</td>
         <td style="color:var(--text2);" title="${escHtml(p.detalhe)}">${escHtml(p.detalhe)}</td>
-        <td style="color:var(--text2);" title="${escHtml(p.observacao)}">${escHtml(p.observacao) || '-'}</td>
+        <td style="color:var(--text2);" title="${escHtml(p.observacao)}">${escHtml(p.observacao) || '-'}${p.observacoes_movimentacoes && p.observacoes_movimentacoes.length > 0 ? `<span class="obs-indicator" data-produto-id="${p.id}" title="${escHtml(p.observacoes_movimentacoes.map(o => (o.setor ? '[' + o.setor + '] ' : '') + o.observacao).join('; '))}">●</span>` : ''}</td>
         <td><input type="checkbox" class="checkbox-estoque" ${estoqueChecked} onchange="toggleEstoque(${p.id}, this.checked)"></td>
         <td><strong>${p.qtd_total}</strong></td>
         ${SETORES.map(st => `<td>${qtds[st] > 0 ? '<span class="sector-badge sector-' + st + '">' + qtds[st] + '</span>' : '-'}</td>`).join('')}
@@ -1043,7 +1848,9 @@ async function openServico(id) {
           ${isAdmin ? `<button class="btn btn-sm btn-red" onclick="confirmDeleteProduct(${p.id})" title="Excluir">✕</button>` : ''}
         </td>
       </tr>`;
+      return html;
     }).join('');
+    labelTableRows('detail-tbody');
   } catch (e) {
     document.getElementById('detail-tbody').innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--red);">Erro: ' + e.message + '</td></tr>';
   }
@@ -1101,6 +1908,16 @@ async function confirmDeleteProduct(produtoId) {
   } catch (e) { showToast(e.message, 'error'); }
 }
 
+// Observation Navigation
+function navigateToObservacoes(produtoId) {
+  currentObsFilterProdutoId = produtoId;
+  showSection('observacoes');
+}
+function clearObsFilter() {
+  currentObsFilterProdutoId = null;
+  loadObservacoes();
+}
+
 // Observation Edit
 function openEditObsModal(id, texto) {
   editObsId = id;
@@ -1124,7 +1941,14 @@ async function confirmEditObs() {
 }
 
 async function refreshObsBadge() {
-  try { const d = await api('/produtos/dashboard'); document.getElementById('obs-nav-badge').textContent = d.observacoes_pendentes; document.getElementById('obs-nav-badge').classList.toggle('hidden', d.observacoes_pendentes === 0); } catch {}
+  try {
+    const d = await api('/produtos/dashboard');
+    const badge = d.observacoes_pendentes || 0;
+    document.getElementById('obs-nav-badge').textContent = badge;
+    document.getElementById('obs-nav-badge').classList.toggle('hidden', badge === 0);
+    document.getElementById('bn-badge-obs').textContent = badge;
+    document.getElementById('bn-badge-obs').classList.toggle('hidden', badge === 0);
+  } catch {}
 }
 
 // Observation Delete
@@ -1138,9 +1962,12 @@ async function confirmDeleteObs(id) {
   } catch (e) { showToast(e.message, 'error'); }
 }
 
-async function updateDataInicio(val) {
+async function onDataInicioChange(val) {
+  dataInicioDirty = true;
   try {
     await api('/servicos/' + currentServicoId, { method: 'PUT', body: JSON.stringify({ data_inicio: val || null }) });
+    dataInicioOriginal = val;
+    dataInicioDirty = false;
     showToast('Data de início atualizada!', 'success');
   } catch (e) { showToast(e.message, 'error'); }
 }
@@ -1277,7 +2104,198 @@ async function uploadFile(file) {
   } catch (e) { status.innerHTML = '<p style="color:var(--red);">❌ Erro: ' + e.message + '</p>'; }
 }
 
-function escHtml(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+// Produtos Urgentes
+async function loadUrgentes() {
+  const tbody = document.getElementById('urg-tbody');
+  const filtroServico = (document.getElementById('urg-filtro-servico').value || '').toLowerCase();
+  const filtroProduto = (document.getElementById('urg-filtro-produto').value || '').toLowerCase();
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);">Carregando...</td></tr>';
+  try {
+    let rows = await api('/urgentes');
+    if (filtroServico) rows = rows.filter(r => r.servico_nome.toLowerCase().includes(filtroServico));
+    if (filtroProduto) rows = rows.filter(r => r.produto_nome.toLowerCase().includes(filtroProduto));
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text2);">Nenhum produto urgente encontrado.</td></tr>';
+      return;
+    }
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    tbody.innerHTML = rows.map(r => {
+      const desp = new Date(r.data_despacho + 'T12:00:00');
+      const diff = Math.ceil((desp - hoje) / (1000 * 60 * 60 * 24));
+      const cor = diff <= 0 ? 'var(--red)' : diff <= 3 ? 'var(--red)' : diff <= 7 ? 'var(--orange)' : 'var(--green)';
+      const diasTxt = diff <= 0 ? 'VENCIDA' : diff + ' dia(s)';
+      return `<tr>
+        <td>${escHtml(r.servico_nome)}</td>
+        <td><strong>${escHtml(r.produto_nome)}</strong>${r.cor ? ' <span style="color:var(--text2);font-size:12px;">(' + escHtml(r.cor) + ')</span>' : ''}</td>
+        <td>${new Date(r.data_despacho + 'T12:00:00').toLocaleDateString('pt-BR')}</td>
+        <td style="color:${cor};font-weight:600;">${diasTxt}</td>
+        <td style="color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(r.observacao)}">${escHtml(r.observacao) || '-'}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-sm btn-ghost" onclick="openEditUrgenteModal(${r.id}, '${escHtml(r.data_despacho)}', '${escHtml(r.observacao || '').replace(/'/g, "\\'")}')" title="Editar">✎</button>
+          <button class="btn btn-sm btn-red" onclick="confirmDeleteUrgente(${r.id})" title="Remover urgência">✕</button>
+        </td>
+      </tr>`;
+    }).join('');
+    labelTableRows('urg-tbody');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--red);">Erro: ' + e.message + '</td></tr>';
+  }
+}
+
+// Add Urgente
+function openAddUrgenteModal() {
+  document.getElementById('addurg-servico').innerHTML = '<option value="">Carregando...</option>';
+  document.getElementById('addurg-produto').innerHTML = '<option value="">Selecione um produto...</option>';
+  document.getElementById('addurg-data').value = '';
+  document.getElementById('addurg-obs').value = '';
+  document.getElementById('addurg-error').textContent = '';
+  document.getElementById('add-urgente-modal').classList.add('open');
+  api('/servicos').then(servicos => {
+    const sel = document.getElementById('addurg-servico');
+    sel.innerHTML = '<option value="">Selecione um serviço...</option>' + servicos.map(s => '<option value="' + s.id + '">' + escHtml(s.nome) + '</option>').join('');
+  }).catch(e => { document.getElementById('addurg-error').textContent = 'Erro ao carregar serviços'; });
+}
+function closeAddUrgenteModal() { document.getElementById('add-urgente-modal').classList.remove('open'); }
+function onUrgenteServicoChange() {
+  const servicoId = document.getElementById('addurg-servico').value;
+  const prodSel = document.getElementById('addurg-produto');
+  prodSel.innerHTML = '<option value="">Carregando...</option>';
+  if (!servicoId) { prodSel.innerHTML = '<option value="">Selecione um produto...</option>'; return; }
+  api('/servicos/' + servicoId).then(s => {
+    prodSel.innerHTML = '<option value="">Selecione um produto...</option>' + s.produtos.map(p => '<option value="' + p.id + '">' + escHtml(p.nome) + ' (' + p.qtd_total + ' un)</option>').join('');
+  }).catch(() => { prodSel.innerHTML = '<option value="">Erro ao carregar produtos</option>'; });
+}
+async function confirmAddUrgente() {
+  const produto_id = parseInt(document.getElementById('addurg-produto').value);
+  const data_despacho = document.getElementById('addurg-data').value;
+  const observacao = document.getElementById('addurg-obs').value.trim();
+  const errEl = document.getElementById('addurg-error');
+  if (!produto_id) { errEl.textContent = 'Selecione um produto'; return; }
+  if (!data_despacho) { errEl.textContent = 'Selecione a data de despacho'; return; }
+  try {
+    await api('/urgentes', { method: 'POST', body: JSON.stringify({ produto_id, data_despacho, observacao }) });
+    closeAddUrgenteModal();
+    showToast('Produto marcado como urgente!', 'success');
+    loadUrgentes();
+  } catch (e) { errEl.textContent = e.message; }
+}
+
+// Batch Add Urgente
+function openBatchUrgenteModal() {
+  document.getElementById('batchurg-servico').innerHTML = '<option value="">Carregando...</option>';
+  document.getElementById('batchurg-produtos').innerHTML = '<p style="color:var(--text2);text-align:center;padding:20px;">Selecione um serviço primeiro.</p>';
+  document.getElementById('batchurg-data').value = '';
+  document.getElementById('batchurg-obs').value = '';
+  document.getElementById('batchurg-error').textContent = '';
+  document.getElementById('batchurg-result').textContent = '';
+  document.getElementById('batch-urgente-modal').classList.add('open');
+  api('/servicos').then(servicos => {
+    const sel = document.getElementById('batchurg-servico');
+    sel.innerHTML = '<option value="">Selecione um serviço...</option>' + servicos.map(s => '<option value="' + s.id + '">' + escHtml(s.nome) + '</option>').join('');
+  }).catch(e => { document.getElementById('batchurg-error').textContent = 'Erro ao carregar serviços'; });
+}
+function closeBatchUrgenteModal() { document.getElementById('batch-urgente-modal').classList.remove('open'); }
+function onBatchUrgenteServicoChange() {
+  const servicoId = document.getElementById('batchurg-servico').value;
+  const container = document.getElementById('batchurg-produtos');
+  if (!servicoId) { container.innerHTML = '<p style="color:var(--text2);text-align:center;padding:20px;">Selecione um serviço primeiro.</p>'; return; }
+  container.innerHTML = '<p style="color:var(--text2);text-align:center;padding:20px;">Carregando...</p>';
+  api('/servicos/' + servicoId).then(s => {
+    if (!s.produtos || s.produtos.length === 0) {
+      container.innerHTML = '<p style="color:var(--text2);text-align:center;padding:20px;">Nenhum produto neste serviço.</p>';
+      return;
+    }
+    container.innerHTML = s.produtos.map(p =>
+      `<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background=''">
+        <input type="checkbox" class="batch-prod-chk" value="${p.id}" style="width:16px;height:16px;cursor:pointer;">
+        <strong>${escHtml(p.nome)}</strong>
+        <span style="color:var(--text2);font-size:12px;margin-left:auto;">${p.qtd_total} un ·  ${p.cor ? escHtml(p.cor) : ''}</span>
+      </label>`
+    ).join('');
+  }).catch(() => { container.innerHTML = '<p style="color:var(--red);text-align:center;padding:20px;">Erro ao carregar produtos.</p>'; });
+}
+function batchSelectAll(select) {
+  document.querySelectorAll('.batch-prod-chk').forEach(cb => cb.checked = select);
+}
+async function confirmBatchUrgente() {
+  const data_despacho = document.getElementById('batchurg-data').value;
+  const observacao = document.getElementById('batchurg-obs').value.trim();
+  const errEl = document.getElementById('batchurg-error');
+  const resultEl = document.getElementById('batchurg-result');
+  errEl.textContent = '';
+  resultEl.textContent = '';
+  if (!data_despacho) { errEl.textContent = 'Selecione a data de despacho'; return; }
+  const checks = document.querySelectorAll('.batch-prod-chk:checked');
+  if (checks.length === 0) { errEl.textContent = 'Selecione pelo menos um produto'; return; }
+  const items = Array.from(checks).map(cb => ({
+    produto_id: parseInt(cb.value),
+    data_despacho,
+    observacao,
+  }));
+  try {
+    const res = await api('/urgentes/batch', { method: 'POST', body: JSON.stringify({ items }) });
+    const parts = [];
+    if (res.added && res.added.length > 0) parts.push(res.added.length + ' adicionado(s)');
+    if (res.skipped && res.skipped.length > 0) parts.push(res.skipped.length + ' já existente(s)');
+    if (res.errors && res.errors.length > 0) parts.push(res.errors.length + ' erro(s)');
+    resultEl.textContent = parts.join(', ');
+    resultEl.style.color = res.errors && res.errors.length > 0 ? 'var(--orange)' : 'var(--green)';
+    if (res.added && res.added.length > 0) {
+      setTimeout(() => { closeBatchUrgenteModal(); loadUrgentes(); }, 1200);
+    }
+  } catch (e) { errEl.textContent = e.message; }
+}
+
+// Edit Urgente
+function openEditUrgenteModal(id, dataDespacho, observacao) {
+  currentEditUrgenteId = id;
+  document.getElementById('editurg-data').value = dataDespacho;
+  document.getElementById('editurg-obs').value = observacao;
+  document.getElementById('editurg-error').textContent = '';
+  document.getElementById('edit-urgente-modal').classList.add('open');
+}
+function closeEditUrgenteModal() { document.getElementById('edit-urgente-modal').classList.remove('open'); currentEditUrgenteId = null; }
+async function confirmEditUrgente() {
+  const data_despacho = document.getElementById('editurg-data').value;
+  const observacao = document.getElementById('editurg-obs').value.trim();
+  const errEl = document.getElementById('editurg-error');
+  if (!data_despacho) { errEl.textContent = 'Selecione a data de despacho'; return; }
+  try {
+    await api('/urgentes/' + currentEditUrgenteId, { method: 'PUT', body: JSON.stringify({ data_despacho, observacao }) });
+    closeEditUrgenteModal();
+    showToast('Urgência atualizada!', 'success');
+    loadUrgentes();
+  } catch (e) { errEl.textContent = e.message; }
+}
+
+// Delete Urgente
+async function confirmDeleteUrgente(id) {
+  if (!confirm('Remover urgência deste produto?')) return;
+  try {
+    await api('/urgentes/' + id, { method: 'DELETE' });
+    showToast('Urgência removida!', 'success');
+    loadUrgentes();
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Delegated click for observation indicators
+document.addEventListener('click', function(e) {
+  const indicator = e.target.closest('.obs-indicator');
+  if (indicator) {
+    const pid = indicator.dataset.produtoId;
+    navigateToObservacoes(pid ? parseInt(pid) : null);
+  }
+});
 
 (function() { if (getToken()) initApp(); else showAuth(); })();
 </script>

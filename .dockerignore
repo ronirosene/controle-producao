@@ -1,7 +1,12 @@
-node_modules
-.git
+**/node_modules/
+.git/
 .env
 controle.db
 *.db-shm
 *.db-wal
-uploads
+uploads/
+src_express/
+.next/
+.gitignore
+README.md
+*.log

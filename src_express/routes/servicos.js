@@ -132,7 +132,7 @@ router.get('/', auth, (req, res) => {
        FROM servicos s
        LEFT JOIN produtos p ON p.servico_id = s.id
        GROUP BY s.id, s.nome, s.created_at
-       ORDER BY s.created_at DESC`,
+        ORDER BY s.nome DESC`,
       []
     );
     res.json(rows);
@@ -176,6 +176,14 @@ router.get('/:id', auth, (req, res) => {
         [prod.id]
       );
       prod.movimentacoes = movs;
+
+      const obsMovs = query(
+        `SELECT observacao, setor, created_at FROM movimentacoes
+         WHERE produto_id = ? AND observacao IS NOT NULL AND observacao != ''
+         ORDER BY created_at DESC`,
+        [prod.id]
+      );
+      prod.observacoes_movimentacoes = obsMovs;
     }
 
     res.json({ ...servico, produtos });

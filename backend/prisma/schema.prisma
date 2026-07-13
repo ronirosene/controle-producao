@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Tabela de usuários do sistema de produção (existente)
+model User {
+  id           Int              @id @default(autoincrement())
+  name         String
+  email        String           @unique(map: "sqlite_autoindex_users_1")
+  passwordHash String           @map("password_hash")
+  features     String?          @default("[]")
+  createdAt    String?          @default("") @map("created_at")
+  updatedAt    String?          @default("") @map("updated_at")
+
+  servicos      Servico[]
+  produtos      Produto[]
+  movimentacoes Movimentacao[]
+
+  @@map("users")
+}
+
+/// Serviços de produção
+model Servico {
+  id         Int       @id @default(autoincrement())
+  userId     Int?      @map("user_id")
+  nome       String
+  createdAt  String?   @default("") @map("created_at")
+  updatedAt  String?   @default("") @map("updated_at")
+  dataInicio String?   @map("data_inicio")
+
+  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  produtos       Produto[]
+  serviceOrders  ServiceOrder[]
+
+  @@map("servicos")
+}
+
+/// Produtos (itens sendo fabricados, movimentados por setores)
+model Produto {
+  id         Int             @id @default(autoincrement())
+  servicoId  Int?            @map("servico_id")
+  userId     Int?            @map("user_id")
+  nome       String
+  cor        String?         @default("")
+  detalhe    String?         @default("")
+  observacao String?         @default("")
+  qtdTotal   Int?            @default(0) @map("qtd_total")
+  createdAt  String?         @default("") @map("created_at")
+  updatedAt  String?         @default("") @map("updated_at")
+  emEstoque  Int?            @default(0) @map("em_estoque")
+
+  servico      Servico?        @relation(fields: [servicoId], references: [id], onDelete: Cascade)
+  user         User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movimentacoes    Movimentacao[]
+  produtosUrgentes ProdutoUrgente[]
+
+  @@map("produtos")
+}
+
+/// Movimentações de produtos entre setores
+model Movimentacao {
+  id          Int      @id @default(autoincrement())
+  produtoId   Int?     @map("produto_id")
+  setor       String
+  quantidade  Int?     @default(0)
+  dataEntrada String?  @map("data_entrada")
+  dataSaida   String?  @map("data_saida")
+  createdAt   String?  @default("") @map("created_at")
+  updatedAt   String?  @default("") @map("updated_at")
+  observacao  String?  @default("")
+  userId      Int?     @map("user_id")
+
+  user    User?    @relation(fields: [userId], references: [id], onDelete: NoAction)
+  produto Produto? @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+
+  @@map("movimentacoes")
+}
+
+/// Backups do sistema
+model Backup {
+  id        Int     @id @default(autoincrement())
+  filename  String
+  filepath  String
+  size      Int?    @default(0)
+  createdAt String? @default("") @map("created_at")
+
+  @@map("backups")
+}
+
+/// Produtos urgentes
+model ProdutoUrgente {
+  id           Int      @id @default(autoincrement())
+  produtoId    Int      @unique @map("produto_id")
+  dataDespacho String   @map("data_despacho")
+  observacao   String?  @default("")
+  createdBy    Int?     @map("created_by")
+  createdAt    String?  @default("") @map("created_at")
+  updatedAt    String?  @default("") @map("updated_at")
+
+  produto Produto? @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+
+  @@map("produtos_urgentes")
+}
+
+/// ====================
+/// Módulo Assistência
+/// ====================
+
+/// Cliente (assistência)
+model Customer {
+  id            String   @id @default(uuid())
+  name          String
+  phone         String?
+  representante String?
+  email         String?
+  address       String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  serviceOrders ServiceOrder[]
+}
+
+/// Tipo de produto para assistência (modelo, cor, tecido)
+model ServiceProduct {
+  id        String   @id @default(uuid())
+  name      String
+  color     String?
+  fabric    String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderItems ServiceOrderItem[]
+}
+
+/// Ordem de Serviço de Assistência
+model ServiceOrder {
+  id          String   @id @default(uuid())
+  pedido      Int?
+  customerId  String
+  entryDate   DateTime @default(now())
+  billingDate DateTime?
+  status      String   @default("AGUARDANDO_FINANCEIRO")
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customer Customer          @relation(fields: [customerId], references: [id])
+  items    ServiceOrderItem[]
+
+  /// Vínculo com o serviço de produção (criado após aprovação financeira)
+  servicoId Int? @map("servico_id")
+  servico   Servico? @relation(fields: [servicoId], references: [id])
+
+  @@map("service_orders")
+}
+
+/// Item de uma Ordem de Serviço (cada produto)
+model ServiceOrderItem {
+  id            String   @id @default(uuid())
+  serviceOrderId String
+  productId     String
+  color         String?
+  fabric        String?
+  quantity      Int      @default(1)
+  price         Float?
+  chargeable    Boolean?
+  problemDesc   String
+  resolution    String?
+  images        String?
+  createdAt     DateTime @default(now())
+
+  serviceOrder ServiceOrder    @relation(fields: [serviceOrderId], references: [id], onDelete: Cascade)
+  product      ServiceProduct  @relation(fields: [productId], references: [id])
+
+  @@map("service_order_items")
+}
+
+/// Representante cadastrado para autocomplete em ordens de assistência
+model AssistenciaRepresentante {
+  id   Int    @id @default(autoincrement())
+  nome String @unique
+
+  @@map("assistencia_representantes")
+}
+
+/// Cor cadastrada para autocomplete em ordens de assistência
+model AssistenciaCor {
+  id   Int    @id @default(autoincrement())
+  nome String @unique
+
+  @@map("assistencia_cores")
+}
+
+/// Detalhe cadastrado para autocomplete em ordens de assistência
+model AssistenciaDetalhe {
+  id   Int    @id @default(autoincrement())
+  nome String @unique
+
+  @@map("assistencia_detalhes")
+}

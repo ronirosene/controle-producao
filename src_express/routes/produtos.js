@@ -202,17 +202,20 @@ router.post('/', auth, (req, res) => {
 
 router.get('/observacoes', auth, (req, res) => {
   try {
-    const rows = query(
-      `SELECT m.id, m.setor, m.quantidade, m.observacao, m.data_entrada, m.data_saida, m.created_at,
-              p.nome AS produto_nome, p.id AS produto_id,
-              s.nome AS servico_nome, s.id AS servico_id
-       FROM movimentacoes m
-       JOIN produtos p ON p.id = m.produto_id
-       JOIN servicos s ON s.id = p.servico_id
-        WHERE m.observacao IS NOT NULL AND m.observacao != ''
-        ORDER BY m.created_at DESC`,
-      []
-    );
+    let sql = `SELECT m.id, m.setor, m.quantidade, m.observacao, m.data_entrada, m.data_saida, m.created_at,
+                      p.nome AS produto_nome, p.id AS produto_id,
+                      s.nome AS servico_nome, s.id AS servico_id
+               FROM movimentacoes m
+               JOIN produtos p ON p.id = m.produto_id
+               JOIN servicos s ON s.id = p.servico_id
+                WHERE m.observacao IS NOT NULL AND m.observacao != ''`;
+    const params = [];
+    if (req.query.produto_id) {
+      sql += ` AND m.produto_id = ?`;
+      params.push(Number(req.query.produto_id));
+    }
+    sql += ` ORDER BY m.created_at DESC`;
+    const rows = query(sql, params);
     res.json(rows);
   } catch (err) {
     console.error('Observacoes error:', err);
@@ -278,7 +281,7 @@ router.get('/dashboard', auth, (req, res) => {
        FROM servicos s
        LEFT JOIN produtos p ON p.servico_id = s.id
        GROUP BY s.id, s.nome
-       ORDER BY s.created_at DESC`,
+        ORDER BY s.nome DESC`,
       []
     );
 
@@ -289,10 +292,55 @@ router.get('/dashboard', auth, (req, res) => {
       []
     );
 
-    res.json({ servicos, observacoes_pendentes: observacoesCount.total });
+    const ultimaAtualizacao = get(
+      `SELECT m.created_at, u.name AS user_name
+       FROM movimentacoes m
+       LEFT JOIN users u ON u.id = m.user_id
+       ORDER BY m.created_at DESC
+       LIMIT 1`,
+      []
+    );
+
+    res.json({ servicos, observacoes_pendentes: observacoesCount.total, ultima_atualizacao: ultimaAtualizacao || null });
   } catch (err) {
     console.error('Dashboard error:', err);
     res.status(500).json({ error: 'Erro ao carregar dashboard' });
+  }
+});
+
+// GET /api/produtos/posicao-atual — current position of all products
+router.get('/posicao-atual', auth, (req, res) => {
+  try {
+    const rows = query(
+      `SELECT
+        p.id AS produto_id,
+        p.nome AS produto_nome,
+        p.qtd_total,
+        s.id AS servico_id,
+        s.nome AS servico_nome,
+        m.setor,
+        m.quantidade,
+        m.data_entrada,
+        m.observacao,
+        CAST(julianday('now') - julianday(COALESCE(m.data_entrada, p.created_at)) AS INTEGER) AS dias_no_setor
+      FROM movimentacoes m
+      JOIN produtos p ON p.id = m.produto_id
+      JOIN servicos s ON s.id = p.servico_id
+      WHERE m.quantidade > 0
+      ORDER BY s.nome, p.nome,
+        CASE m.setor
+          WHEN 'marcenaria' THEN 1
+          WHEN 'lixa' THEN 2
+          WHEN 'pintura' THEN 3
+          WHEN 'embalagem' THEN 4
+          ELSE 5
+        END`,
+      []
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Posicao atual error:', err);
+    res.status(500).json({ error: 'Erro ao carregar posição atual' });
   }
 });
 

@@ -18,3 +18,8 @@ primary_region = "gru"
 [mounts]
   source = "data"
   destination = "/data"
+
+[env]
+  PORT = "8080"
+  DATABASE_URL = "file:/data/controle.db"
+  NODE_ENV = "production"
