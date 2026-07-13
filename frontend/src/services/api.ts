@@ -80,7 +80,7 @@ export interface ServiceOrder {
   customerId: string;
   entryDate: string;
   billingDate?: string;
-  status: 'AGUARDANDO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'ENTREGUE' | 'CANCELADO' | 'AGUARDANDO_FINANCEIRO';
+  status: 'AGUARDANDO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'ENTREGUE' | 'CANCELADO' | 'AGUARDANDO_FINANCEIRO' | 'AGUARDANDO_AUT_CLIENTE' | 'AUTORIZADO_CLIENTE';
   notes?: string;
   createdAt: string;
   updatedAt: string;
