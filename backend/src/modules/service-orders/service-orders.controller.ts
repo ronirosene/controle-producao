@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Request } from 'express';
 import { ServiceOrdersService } from './service-orders.service';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
@@ -19,23 +20,29 @@ export class ServiceOrdersController {
   }
 
   @Post()
-  create(@Body() dto: CreateServiceOrderDto) {
-    return this.service.create(dto);
+  @UseGuards(AuthGuard('jwt'))
+  create(@Body() dto: CreateServiceOrderDto, @Req() req: Request) {
+    const user = (req as any).user;
+    return this.service.create(dto, user?.id);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateServiceOrderDto) {
-    return this.service.update(id, dto);
+  @UseGuards(AuthGuard('jwt'))
+  update(@Param('id') id: string, @Body() dto: UpdateServiceOrderDto, @Req() req: Request) {
+    const user = (req as any).user;
+    return this.service.update(id, dto, user?.id);
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'))
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }
 
   @Post(':id/create-production-service')
   @UseGuards(AuthGuard('jwt'))
-  createProductionService(@Param('id') id: string) {
-    return this.service.createProductionService(id);
+  createProductionService(@Param('id') id: string, @Req() req: Request) {
+    const user = (req as any).user;
+    return this.service.createProductionService(id, user?.id);
   }
 }

@@ -119,10 +119,10 @@ export default function ServicosPage() {
 
 function getSetorInfo(produto: any) {
   const movs = produto.movimentacoes || [];
-  const info: Record<string, { quantidade: number; dataEntrada?: string; dataSaida?: string }> = {};
+  const info: Record<string, { quantidade: number; dataEntrada?: string; dataSaida?: string; createdAt?: string }> = {};
   for (const m of movs) {
     if (m.quantidade > 0) {
-      info[m.setor] = { quantidade: m.quantidade, dataEntrada: m.dataEntrada, dataSaida: m.dataSaida };
+      info[m.setor] = { quantidade: m.quantidade, dataEntrada: m.dataEntrada, dataSaida: m.dataSaida, createdAt: m.created_at || m.createdAt };
     }
   }
   const current = [...movs].reverse().find((m: any) => m.quantidade > 0);
@@ -407,19 +407,23 @@ function ServicoDetailView({ servicoId, highlightProdutoId, onClose, onRefresh }
                     {SETORES_ORDEM.map((setor) => {
                       const s = info[setor];
                       const isCurrent = setor === currentSetor;
+                      const dateStr = s?.createdAt ? new Date(s.createdAt + (s.createdAt.includes('T') ? '' : 'T')).toLocaleDateString('pt-BR') : '';
                       return (
                         <td key={setor} className="p-2 text-center">
                           {isCurrent ? (
-                            <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border-2 bg-blue-50 text-blue-700 border-blue-400 shadow-sm">
-                              <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                              {currentQtd} un
+                            <div className="inline-flex flex-col items-center gap-0.5 px-3 py-1 rounded-full text-xs font-bold border-2 bg-blue-50 text-blue-700 border-blue-400 shadow-sm">
+                              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />{currentQtd} un</span>
+                              {dateStr && <span className="text-[10px] font-normal text-blue-500">{dateStr}</span>}
                             </div>
                           ) : s ? (
-                            <div className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-gray-400">
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-green-500">
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                              {s.quantidade} un
+                            <div className="inline-flex flex-col items-center gap-0.5 px-2 py-1 rounded text-xs text-gray-400">
+                              <span className="flex items-center gap-1">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-green-500">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                                {s.quantidade} un
+                              </span>
+                              {dateStr && <span className="text-[10px] text-gray-400">{dateStr}</span>}
                             </div>
                           ) : (
                             <span className="text-gray-200">—</span>

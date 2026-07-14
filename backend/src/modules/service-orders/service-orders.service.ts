@@ -100,7 +100,7 @@ export class ServiceOrdersService {
 
 
 
-  async create(dto: CreateServiceOrderDto) {
+  async create(dto: CreateServiceOrderDto, userId?: number) {
     try {
       this.logger.log(`Creating order for customer: ${dto.customerName}, items: ${dto.items?.length}`);
 
@@ -119,6 +119,7 @@ export class ServiceOrdersService {
           entryDate: dto.entryDate ? new Date(dto.entryDate) : new Date(),
           billingDate: dto.billingDate ? new Date(dto.billingDate) : null,
           notes: dto.notes || null,
+          userId,
           items: {
             create: await Promise.all(dto.items.map(async (item) => {
               this.logger.log(`Resolving product: ${item.productName}`);
@@ -156,7 +157,7 @@ export class ServiceOrdersService {
     }
   }
 
-  async update(id: string, dto: UpdateServiceOrderDto) {
+  async update(id: string, dto: UpdateServiceOrderDto, userId?: number) {
     try {
       this.logger.log(`Updating order ${id}`);
       const existing = await this.findOne(id);
@@ -168,6 +169,7 @@ export class ServiceOrdersService {
       if (dto.billingDate !== undefined) data.billingDate = new Date(dto.billingDate);
       if (dto.status !== undefined) data.status = dto.status;
       if (dto.notes !== undefined) data.notes = dto.notes;
+      if (userId !== undefined) data.userId = userId;
 
       if (dto.customerName) {
         let customer = await this.prisma.customer.findFirst({
@@ -261,7 +263,7 @@ export class ServiceOrdersService {
     }
   }
 
-  async createProductionService(id: string) {
+  async createProductionService(id: string, userId?: number) {
     try {
       this.logger.log(`Creating production service from order ${id}`);
       const order = await this.findOne(id);
@@ -309,6 +311,7 @@ export class ServiceOrdersService {
             produtoId: produto.id,
             setor: 'marcenaria',
             quantidade: item.quantity || 1,
+            userId,
             createdAt: now,
           },
         });

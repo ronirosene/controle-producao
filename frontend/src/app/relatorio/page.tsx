@@ -183,6 +183,7 @@ function AssistenciaTable({ logs }: { logs: any[] }) {
             <th className="p-3">Descrição</th>
             <th className="p-3">Pedido</th>
             <th className="p-3">Cliente</th>
+            <th className="p-3">Usuário</th>
           </tr>
         </thead>
         <tbody>
@@ -197,9 +198,10 @@ function AssistenciaTable({ logs }: { logs: any[] }) {
               <td className="p-3 text-gray-700">{l.desc}</td>
               <td className="p-3 font-mono font-bold text-gray-700">{l.pedido ? `#${l.pedido}` : '-'}</td>
               <td className="p-3 text-gray-600">{l.customer || '-'}</td>
+              <td className="p-3 text-gray-500">{l.user || '-'}</td>
             </tr>
           ))}
-          {logs.length === 0 && <tr><td colSpan={5} className="p-4 text-center text-gray-400">Nenhum registro de assistência encontrado</td></tr>}
+          {logs.length === 0 && <tr><td colSpan={6} className="p-4 text-center text-gray-400">Nenhum registro de assistência encontrado</td></tr>}
         </tbody>
       </table>
     </div>

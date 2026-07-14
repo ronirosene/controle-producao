@@ -17,9 +17,10 @@ model User {
   createdAt    String?          @default("") @map("created_at")
   updatedAt    String?          @default("") @map("updated_at")
 
-  servicos      Servico[]
-  produtos      Produto[]
-  movimentacoes Movimentacao[]
+  servicos       Servico[]
+  produtos       Produto[]
+  movimentacoes  Movimentacao[]
+  serviceOrders  ServiceOrder[]
 
   @@map("users")
 }
@@ -148,11 +149,13 @@ model ServiceOrder {
   billingDate DateTime?
   status      String   @default("AGUARDANDO_FINANCEIRO")
   notes       String?
+  userId      Int?     @map("user_id")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   customer Customer          @relation(fields: [customerId], references: [id])
   items    ServiceOrderItem[]
+  user     User?             @relation(fields: [userId], references: [id], onDelete: NoAction)
 
   /// Vínculo com o serviço de produção (criado após aprovação financeira)
   servicoId Int? @map("servico_id")

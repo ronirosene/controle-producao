@@ -11,6 +11,7 @@ export class AssistenciaRegistersService {
       include: {
         customer: true,
         items: { include: { product: true } },
+        user: { select: { name: true } },
       },
       orderBy: { updatedAt: 'desc' },
       take: 200,
@@ -29,6 +30,7 @@ export class AssistenciaRegistersService {
         orderId: order.id,
         customer: order.customer.name,
         status: order.status,
+        user: order.user?.name || '-',
       });
 
       for (const item of order.items) {
@@ -41,6 +43,7 @@ export class AssistenciaRegistersService {
             orderId: order.id,
             customer: order.customer.name,
             value: item.price,
+            user: order.user?.name || '-',
           });
         }
       }
@@ -54,6 +57,7 @@ export class AssistenciaRegistersService {
           orderId: order.id,
           customer: order.customer.name,
           servicoId: order.servicoId,
+          user: order.user?.name || '-',
         });
       }
     }
