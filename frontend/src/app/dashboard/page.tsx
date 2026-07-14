@@ -24,7 +24,7 @@ export default function DashboardProducaoPage() {
 
   const totalServicos = data.servicos?.length || 0;
   const totalPecas = data.servicos?.reduce((a: number, s: any) => a + Number(s.total_pecas || 0), 0) || 0;
-  const totalFinalizados = data.servicos?.reduce((a: number, s: any) => a + Number(s.produtos_finalizados || 0), 0) || 0;
+  const totalFinalizados = data.servicos?.reduce((a: number, s: any) => a + Number(s.pecas_finalizadas || 0), 0) || 0;
 
   const ordensAbertas = orders.filter((o: any) => !['ENTREGUE', 'CANCELADO'].includes(o.status)).length;
   const aguardandoFinanceiro = orders.filter((o: any) => o.status === 'AGUARDANDO_FINANCEIRO').length;
@@ -71,19 +71,19 @@ export default function DashboardProducaoPage() {
                 <th className="p-3">Serviço</th>
                 <th className="p-3">Produtos</th>
                 <th className="p-3">Peças</th>
-                <th className="p-3">Finalizados</th>
+                <th className="p-3">Peças Finalizadas</th>
                 <th className="p-3">Progresso</th>
               </tr>
             </thead>
             <tbody>
               {data.servicos?.map((s: any) => {
-                const pct = s.total_pecas > 0 ? Math.min(100, Math.round((s.produtos_finalizados / s.total_pecas) * 100)) : 0;
+                const pct = s.total_pecas > 0 ? Math.min(100, Math.round((s.pecas_finalizadas / s.total_pecas) * 100)) : 0;
                 return (
                   <tr key={s.servico_id} className="border-b hover:bg-gray-50">
                     <td className="p-3 font-medium">{s.servico} {s.data_inicio ? `(${s.data_inicio})` : ''}</td>
                     <td className="p-3">{s.total_produtos}</td>
                     <td className="p-3">{s.total_pecas}</td>
-                    <td className="p-3 text-green-700 font-medium">{s.produtos_finalizados}</td>
+                    <td className="p-3 text-green-700 font-medium">{s.pecas_finalizadas}</td>
                     <td className="p-3">
                       <div className="flex items-center gap-2">
                         <div className="w-20 bg-gray-200 rounded-full h-2">

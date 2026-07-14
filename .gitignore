@@ -5,3 +5,4 @@ uploads/
 *.log
 *.db-shm
 *.db-wal
+*.db

@@ -278,11 +278,12 @@ export class ServiceOrdersService {
       const pedidoLabel = order.pedido ? `#${order.pedido}` : `#${order.id.slice(0, 8)}`;
       const now = new Date().toISOString();
 
-      // Create the Servico
+      const today = new Date().toISOString().split('T')[0];
       const servico = await this.prisma.servico.create({
         data: {
           nome: `Assistência - ${pedidoLabel}`,
           createdAt: now,
+          dataInicio: today,
         },
       });
 

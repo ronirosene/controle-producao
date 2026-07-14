@@ -10,11 +10,15 @@ export class DashboardService {
       SELECT s.nome AS servico, s.id AS servico_id, s.data_inicio,
               COUNT(p.id) AS total_produtos,
               COALESCE(SUM(p.qtd_total), 0) AS total_pecas,
-              COUNT(CASE WHEN EXISTS (
-                SELECT 1 FROM movimentacoes m WHERE m.produto_id = p.id AND m.setor = 'embalagem' AND m.quantidade > 0
-              ) THEN 1 END) AS produtos_finalizados
+              COALESCE(SUM(m2.pecas_emb), 0) AS pecas_finalizadas
        FROM servicos s
        LEFT JOIN produtos p ON p.servico_id = s.id
+       LEFT JOIN (
+         SELECT produto_id, SUM(quantidade) AS pecas_emb
+         FROM movimentacoes
+         WHERE setor = 'embalagem' AND quantidade > 0
+         GROUP BY produto_id
+       ) m2 ON m2.produto_id = p.id
        GROUP BY s.id, s.nome, s.data_inicio
        ORDER BY s.nome DESC
     `);
