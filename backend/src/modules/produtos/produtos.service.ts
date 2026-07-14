@@ -85,10 +85,11 @@ export class ProdutosService {
       where: { produtoId, setor: data.setor_destino },
     });
 
+    const now = new Date().toISOString();
     if (dest) {
       await this.prisma.movimentacao.update({
         where: { id: dest.id },
-        data: { quantidade: (dest.quantidade || 0) + data.quantidade, dataEntrada: dataMov, userId },
+        data: { quantidade: (dest.quantidade || 0) + data.quantidade, dataEntrada: dataMov, userId, createdAt: now },
       });
     } else {
       await this.prisma.movimentacao.create({
@@ -98,6 +99,7 @@ export class ProdutosService {
           quantidade: data.quantidade,
           dataEntrada: dataMov,
           userId,
+          createdAt: now,
         },
       });
     }

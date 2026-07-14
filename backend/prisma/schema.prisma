@@ -208,3 +208,19 @@ model AssistenciaDetalhe {
 
   @@map("assistencia_detalhes")
 }
+
+/// Log persistido de eventos da assistência (criação, alteração, exclusão)
+model ServiceOrderLog {
+  id        Int      @id @default(autoincrement())
+  type      String
+  desc      String
+  date      DateTime @default(now())
+  pedido    Int?
+  orderId   String?
+  customer  String?
+  value     Float?
+  servicoId Int?
+  user      String?
+
+  @@map("service_order_logs")
+}

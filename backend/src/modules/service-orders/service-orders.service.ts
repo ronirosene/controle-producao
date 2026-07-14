@@ -100,6 +100,12 @@ export class ServiceOrdersService {
 
 
 
+  private async persistLog(type: string, desc: string, order: any, userName?: string) {
+    await this.prisma.serviceOrderLog.create({
+      data: { type, desc, pedido: order.pedido, orderId: order.id, customer: order.customer?.name || null, user: userName || '-' },
+    });
+  }
+
   async create(dto: CreateServiceOrderDto, userId?: number) {
     try {
       this.logger.log(`Creating order for customer: ${dto.customerName}, items: ${dto.items?.length}`);
@@ -149,6 +155,8 @@ export class ServiceOrdersService {
       this.logger.log(`Order created: ${order.id}`);
       this.email.sendNewOrderNotification(order);
       this.autoRegisterOrderData(dto);
+      const userName = userId ? (await this.prisma.user.findUnique({ where: { id: userId } }))?.name : undefined;
+      await this.persistLog('ASSISTENCIA_CRIACAO', `Pedido #${order.pedido} criado — Cliente: ${order.customer.name}`, order, userName);
       return order;
     } catch (err: any) {
       const msg = err?.message || JSON.stringify(err);
@@ -255,6 +263,23 @@ export class ServiceOrdersService {
       }
 
       this.autoRegisterOrderData(dto);
+      const userName = userId ? (await this.prisma.user.findUnique({ where: { id: userId } }))?.name : undefined;
+
+      const pedidoLabel = `#${updated.pedido || updated.id.slice(0, 8)}`;
+      if (!hadFinanceiroBefore && hasFinanceiroNow) {
+        for (const item of updated.items) {
+          if (item.price != null) {
+            await this.persistLog('FINANCEIRO_VALOR', `Pedido ${pedidoLabel} — Valor definido: R$ ${Number(item.price).toFixed(2)} (${item.product?.name || ''})`, updated, userName);
+          }
+        }
+      }
+      if (existing.status !== updated.status) {
+        await this.persistLog('STATUS_ALTERADO', `Pedido ${pedidoLabel} — Status alterado: ${existing.status} → ${updated.status}`, updated, userName);
+      }
+      if (updated.servicoId && !existing.servicoId) {
+        await this.persistLog('SERVICO_PRODUCAO', `Pedido ${pedidoLabel} — Serviço de produção vinculado (#${updated.servicoId})`, updated, userName);
+      }
+
       return updated;
     } catch (err: any) {
       const msg = err?.message || JSON.stringify(err);
@@ -338,9 +363,11 @@ export class ServiceOrdersService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId?: number) {
     try {
-      await this.findOne(id);
+      const order = await this.findOne(id);
+      const userName = userId ? (await this.prisma.user.findUnique({ where: { id: userId } }))?.name : undefined;
+      await this.persistLog('ASSISTENCIA_EXCLUSAO', `Pedido #${order.pedido || order.id.slice(0, 8)} excluído — Cliente: ${order.customer?.name || ''}`, order, userName);
       return this.prisma.serviceOrder.delete({ where: { id } });
     } catch (err: any) {
       const msg = err?.message || JSON.stringify(err);

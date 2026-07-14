@@ -7,63 +7,76 @@ export class AssistenciaRegistersService {
   constructor(private prisma: PrismaService) {}
 
   async getLogs() {
-    const orders = await this.prisma.serviceOrder.findMany({
-      include: {
-        customer: true,
-        items: { include: { product: true } },
-        user: { select: { name: true } },
-      },
-      orderBy: { updatedAt: 'desc' },
-      take: 200,
+    return this.prisma.serviceOrderLog.findMany({
+      orderBy: { date: 'desc' },
+      take: 500,
     });
+  }
 
-    const logs: any[] = [];
-
-    for (const order of orders) {
-      const pedidoLabel = order.pedido ? `#${order.pedido}` : `#${order.id.slice(0, 8)}`;
-
-      logs.push({
+  async logCreate(order: any, userName?: string) {
+    const pedidoLabel = order.pedido ? `#${order.pedido}` : `#${order.id.slice(0, 8)}`;
+    await this.prisma.serviceOrderLog.create({
+      data: {
         type: 'ASSISTENCIA_CRIACAO',
-        date: order.createdAt,
-        desc: `Pedido ${pedidoLabel} criado — Cliente: ${order.customer.name}`,
+        desc: `Pedido ${pedidoLabel} criado — Cliente: ${order.customer?.name || ''}`,
         pedido: order.pedido,
         orderId: order.id,
-        customer: order.customer.name,
-        status: order.status,
-        user: order.user?.name || '-',
-      });
+        customer: order.customer?.name || null,
+        user: userName || '-',
+      },
+    });
+  }
 
-      for (const item of order.items) {
+  async logUpdate(oldOrder: any, newOrder: any, userName?: string) {
+    const pedidoLabel = newOrder.pedido ? `#${newOrder.pedido}` : `#${newOrder.id.slice(0, 8)}`;
+
+    const hadFinanceiro = oldOrder.items?.some((i: any) => i.price != null);
+    const hasFinanceiro = newOrder.items?.some((i: any) => i.price != null);
+    if (!hadFinanceiro && hasFinanceiro) {
+      for (const item of newOrder.items) {
         if (item.price != null) {
-          logs.push({
-            type: 'FINANCEIRO_VALOR',
-            date: order.updatedAt,
-            desc: `Pedido ${pedidoLabel} — Valor definido: R$ ${Number(item.price).toFixed(2)} (${item.product?.name || ''})`,
-            pedido: order.pedido,
-            orderId: order.id,
-            customer: order.customer.name,
-            value: item.price,
-            user: order.user?.name || '-',
+          await this.prisma.serviceOrderLog.create({
+            data: {
+              type: 'FINANCEIRO_VALOR',
+              desc: `Pedido ${pedidoLabel} — Valor definido: R$ ${Number(item.price).toFixed(2)} (${item.product?.name || ''})`,
+              pedido: newOrder.pedido,
+              orderId: newOrder.id,
+              customer: newOrder.customer?.name || null,
+              value: item.price,
+              user: userName || '-',
+            },
           });
         }
       }
-
-      if (order.servicoId) {
-        logs.push({
-          type: 'SERVICO_PRODUCAO',
-          date: order.updatedAt,
-          desc: `Pedido ${pedidoLabel} — Serviço de produção vinculado (#${order.servicoId})`,
-          pedido: order.pedido,
-          orderId: order.id,
-          customer: order.customer.name,
-          servicoId: order.servicoId,
-          user: order.user?.name || '-',
-        });
-      }
     }
 
-    logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    return logs.slice(0, 500);
+    if (newOrder.servicoId && !oldOrder.servicoId) {
+      await this.prisma.serviceOrderLog.create({
+        data: {
+          type: 'SERVICO_PRODUCAO',
+          desc: `Pedido ${pedidoLabel} — Serviço de produção vinculado (#${newOrder.servicoId})`,
+          pedido: newOrder.pedido,
+          orderId: newOrder.id,
+          customer: newOrder.customer?.name || null,
+          servicoId: newOrder.servicoId,
+          user: userName || '-',
+        },
+      });
+    }
+  }
+
+  async logDelete(order: any, userName?: string) {
+    const pedidoLabel = order.pedido ? `#${order.pedido}` : `#${order.id.slice(0, 8)}`;
+    await this.prisma.serviceOrderLog.create({
+      data: {
+        type: 'ASSISTENCIA_EXCLUSAO',
+        desc: `Pedido ${pedidoLabel} excluído — Cliente: ${order.customer?.name || ''}`,
+        pedido: order.pedido,
+        orderId: order.id,
+        customer: order.customer?.name || null,
+        user: userName || '-',
+      },
+    });
   }
 
   async findAllRepresentantes(search?: string) {

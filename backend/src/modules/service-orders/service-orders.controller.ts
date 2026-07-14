@@ -35,8 +35,9 @@ export class ServiceOrdersController {
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'))
-  remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  remove(@Param('id') id: string, @Req() req: Request) {
+    const user = (req as any).user;
+    return this.service.remove(id, user?.id);
   }
 
   @Post(':id/create-production-service')
