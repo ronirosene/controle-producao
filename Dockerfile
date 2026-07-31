@@ -24,7 +24,7 @@ COPY --from=backend-builder /app/prisma ./backend/prisma
 COPY --from=backend-builder /app/package.json ./backend/
 COPY --from=frontend-builder /app/.next/standalone ./frontend
 COPY --from=frontend-builder /app/.next/static ./frontend/.next/static
-COPY --from=frontend-builder /app/public ./frontend/public
+COPY public ./frontend/public
 COPY start.js ./
 RUN mkdir -p uploads
 EXPOSE 8080

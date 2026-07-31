@@ -513,13 +513,14 @@ function OrderFormModal({ user, editId, editPedido, onClose, onSaved }: { user: 
     setUploading(true);
 
     try {
-      const processedItems = await Promise.all(items.map(async (item) => {
+      const processedItems = [];
+      for (const item of items) {
       let urls = [...item.existingImages];
       if (item.newImageFiles.length > 0) {
         const newUrls = await uploadApi.uploadMultiple(item.newImageFiles);
         urls = [...urls, ...newUrls];
       }
-      return {
+      processedItems.push({
         _key: item._key,
         productName: item.productName,
         productColor: item.productColor || undefined,
@@ -530,8 +531,8 @@ function OrderFormModal({ user, editId, editPedido, onClose, onSaved }: { user: 
         price: item.price ? parseFloat(item.price) : undefined,
         chargeable: item.chargeable === 'sim' ? true : item.chargeable === 'nao' ? false : undefined,
         images: urls.length > 0 ? JSON.stringify(urls) : undefined,
-      };
-    }));
+      });
+    }
 
     if (editId) {
       const existing = await serviceOrdersApi.get(editId);

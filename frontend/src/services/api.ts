@@ -141,17 +141,14 @@ export const uploadApi = {
     return { url: data.urls[0] };
   },
   uploadMultiple: async (files: File[]): Promise<string[]> => {
-    const form = new FormData();
-    files.forEach((f) => form.append('files', f));
-    const headers: Record<string, string> = {};
-    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-    const res = await fetch(`${BASE}/upload`, { method: 'POST', body: form, headers });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Erro ao enviar imagens (${res.status}): ${text}`);
+    // Send one image at a time so the backend never has to decode several large
+    // photos concurrently on a memory-constrained machine.
+    const urls: string[] = [];
+    for (const file of files) {
+      const { url } = await uploadApi.upload(file);
+      urls.push(url);
     }
-    const data = await res.json();
-    return data.urls;
+    return urls;
   },
 };
 
