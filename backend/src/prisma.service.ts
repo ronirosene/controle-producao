@@ -5,9 +5,9 @@ import { PrismaClient } from '@prisma/client';
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     await this.$connect();
-    await this.$executeRawUnsafe('PRAGMA journal_mode = WAL');
-    await this.$executeRawUnsafe('PRAGMA busy_timeout = 5000');
-    await this.$executeRawUnsafe('PRAGMA foreign_keys = ON');
+    await this.$queryRawUnsafe('PRAGMA journal_mode = WAL');
+    await this.$queryRawUnsafe('PRAGMA busy_timeout = 5000');
+    await this.$queryRawUnsafe('PRAGMA foreign_keys = ON');
   }
 
   async onModuleDestroy() {
