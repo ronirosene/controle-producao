@@ -1,12 +1,9 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/services/auth'
 import { SidebarProvider } from './sidebar-context'
 import { Nav } from './nav'
 import { MainContent } from './main-content'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Controle de Produção',
@@ -20,7 +17,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className={inter.className}>
+      <body>
         <AuthProvider>
           <SidebarProvider>
             <Nav />

@@ -2,7 +2,6 @@
 
 import { useState, useRef, DragEvent } from 'react';
 import { useAuth } from '@/services/auth';
-import { getAuthToken } from '@/services/api';
 
 export default function ImportarPage() {
   const { user } = useAuth();
@@ -32,7 +31,7 @@ export default function ImportarPage() {
     e.stopPropagation();
     setDragging(false);
     const dropped = e.dataTransfer.files?.[0];
-    if (dropped && /\.(xlsx|xls|csv)$/i.test(dropped.name)) {
+    if (dropped && /\.(xlsx|csv)$/i.test(dropped.name)) {
       setFile(dropped);
     } else {
       setStatus('Formato inválido. Use .xlsx, .xls ou .csv');
@@ -51,14 +50,10 @@ export default function ImportarPage() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const token = getAuthToken();
-      const headers: Record<string, string> = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
       const res = await fetch('/api/servicos/import', {
         method: 'POST',
         body: formData,
-        headers,
+        credentials: 'include',
       });
 
       if (!res.ok) {
@@ -86,7 +81,7 @@ export default function ImportarPage() {
 
       <div className="bg-white rounded-lg shadow p-6">
         <p className="text-sm text-gray-500 mb-4">
-          <strong>Formatos suportados:</strong> XLSX, XLS (Excel) ou CSV.
+          <strong>Formatos suportados:</strong> XLSX (Excel) ou CSV.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -100,7 +95,7 @@ export default function ImportarPage() {
             <input
               ref={inputRef}
               type="file"
-              accept=".xlsx,.xls,.csv"
+              accept=".xlsx,.csv"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               className="hidden"
             />

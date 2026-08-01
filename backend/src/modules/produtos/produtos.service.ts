@@ -2,14 +2,15 @@ import { Injectable, NotFoundException, ForbiddenException, BadRequestException 
 import { PrismaService } from '../../prisma.service';
 
 const SETORES_ORDEM = ['marcenaria', 'lixa', 'pintura', 'embalagem'];
-const ADMIN_EMAILS = ['ronyrosene@gmail.com', 'pcp@moveispelinson.com.br'];
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'ronyrosene@gmail.com,pcp@moveispelinson.com.br')
+  .split(',').map((email) => email.trim().toLowerCase()).filter(Boolean);
 
 @Injectable()
 export class ProdutosService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: { servico_id: number; nome: string; cor?: string; detalhe?: string; observacao?: string; qtd_total?: number }, userEmail: string, userId: number) {
-    if (!ADMIN_EMAILS.includes(userEmail)) {
+    if (!ADMIN_EMAILS.includes(userEmail.toLowerCase())) {
       throw new ForbiddenException('Apenas usuários autorizados podem criar produtos');
     }
     const servico = await this.prisma.servico.findUnique({ where: { id: data.servico_id } });
@@ -111,7 +112,7 @@ export class ProdutosService {
   }
 
   async editar(produtoId: number, data: any, userEmail: string) {
-    if (!ADMIN_EMAILS.includes(userEmail)) {
+    if (!ADMIN_EMAILS.includes(userEmail.toLowerCase())) {
       throw new ForbiddenException('Apenas usuários autorizados podem realizar esta operação');
     }
     const prod = await this.prisma.produto.findUnique({ where: { id: produtoId } });
@@ -140,7 +141,7 @@ export class ProdutosService {
   }
 
   async remove(produtoId: number, userEmail: string) {
-    if (!ADMIN_EMAILS.includes(userEmail)) {
+    if (!ADMIN_EMAILS.includes(userEmail.toLowerCase())) {
       throw new ForbiddenException('Apenas usuários autorizados podem excluir produtos');
     }
     const prod = await this.prisma.produto.findUnique({ where: { id: produtoId } });

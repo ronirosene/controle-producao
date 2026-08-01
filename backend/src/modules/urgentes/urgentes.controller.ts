@@ -1,9 +1,11 @@
 import { Controller, Get, Post, Delete, Body, Param, Req, UseGuards, ParseIntPipe } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UrgentesService } from './urgentes.service';
+import { RequireFeatures } from '../../common/auth.decorators';
 
 @Controller('urgentes')
 @UseGuards(AuthGuard('jwt'))
+@RequireFeatures('PRODUCAO_ESTOQUE')
 export class UrgentesController {
   constructor(private readonly service: UrgentesService) {}
 

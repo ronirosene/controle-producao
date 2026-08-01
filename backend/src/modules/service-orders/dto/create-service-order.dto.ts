@@ -1,12 +1,14 @@
-import { IsString, IsOptional, IsInt, IsArray, ValidateNested, Min } from 'class-validator';
+import { IsString, IsOptional, IsInt, IsArray, ValidateNested, Min, IsNumber, IsBoolean, IsDateString, MaxLength, ArrayMinSize } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateServiceOrderItemDto {
   @IsString()
+  @MaxLength(160)
   productName: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(2000)
   productColor?: string;
 
   @IsOptional()
@@ -26,9 +28,11 @@ export class CreateServiceOrderItemDto {
   images?: string;
 
   @IsOptional()
+  @IsNumber()
   price?: number;
 
   @IsOptional()
+  @IsBoolean()
   chargeable?: boolean;
 }
 
@@ -38,12 +42,15 @@ export class CreateServiceOrderDto {
   pedido?: number;
 
   @IsString()
+  @MaxLength(160)
   customerName: string;
 
   @IsOptional()
+  @IsDateString()
   entryDate?: string;
 
   @IsOptional()
+  @IsDateString()
   billingDate?: string;
 
   @IsOptional()
@@ -51,6 +58,7 @@ export class CreateServiceOrderDto {
   notes?: string;
 
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => CreateServiceOrderItemDto)
   items: CreateServiceOrderItemDto[];

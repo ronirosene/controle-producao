@@ -3,9 +3,11 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ProdutosService } from './produtos.service';
+import { RequireFeatures } from '../../common/auth.decorators';
 
 @Controller('produtos')
 @UseGuards(AuthGuard('jwt'))
+@RequireFeatures('PRODUCAO_ESTOQUE', 'PRODUCAO_SERVICOS')
 export class ProdutosController {
   constructor(private readonly service: ProdutosService) {}
 

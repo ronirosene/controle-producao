@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsInt, IsArray, ValidateNested, Min } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsArray, ValidateNested, Min, IsNumber, IsBoolean, IsDateString, IsIn, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class UpdateServiceOrderItemDto {
@@ -40,9 +40,11 @@ export class UpdateServiceOrderItemDto {
   _delete?: string;
 
   @IsOptional()
+  @IsNumber()
   price?: number;
 
   @IsOptional()
+  @IsBoolean()
   chargeable?: boolean;
 }
 
@@ -56,13 +58,16 @@ export class UpdateServiceOrderDto {
   customerName?: string;
 
   @IsOptional()
+  @IsDateString()
   entryDate?: string;
 
   @IsOptional()
+  @IsDateString()
   billingDate?: string;
 
   @IsOptional()
   @IsString()
+  @IsIn(['AGUARDANDO', 'EM_ANDAMENTO', 'CONCLUIDO', 'ENTREGUE', 'CANCELADO', 'AGUARDANDO_FINANCEIRO', 'AGUARDANDO_AUT_CLIENTE', 'AUTORIZADO_CLIENTE'])
   status?: string;
 
   @IsOptional()

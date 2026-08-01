@@ -1,20 +1,13 @@
 const BASE = '/api';
 
-let authToken: string | null = null;
 let authCallback: ((token: string | null) => void) | null = null;
 
-if (typeof window !== 'undefined') {
-  const stored = localStorage.getItem('auth_token');
-  if (stored) authToken = stored;
-}
-
 export function setAuthToken(token: string | null) {
-  authToken = token;
   if (authCallback) authCallback(token);
 }
 
 export function getAuthToken() {
-  return authToken;
+  return null;
 }
 
 export function onAuthChange(cb: (token: string | null) => void) {
@@ -24,13 +17,12 @@ export function onAuthChange(cb: (token: string | null) => void) {
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
   const res = await fetch(`${BASE}${path}`, {
+    credentials: 'include',
     headers: { ...headers, ...options?.headers as Record<string, string> },
     ...options,
   });
   if (res.status === 401) {
-    setAuthToken(null);
     if (typeof window !== 'undefined') window.location.href = '/login';
     throw new Error('Não autorizado');
   }
@@ -104,9 +96,8 @@ export function getImageList(order: ServiceOrder | ServiceOrderItem): string[] {
 
 export const authApi = {
   login: (email: string, password: string) =>
-    request<{ token: string; user: any }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  register: (data: any) =>
-    request<{ token: string; user: any }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ user: any }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  logout: () => request<{ ok: boolean }>('/auth/logout', { method: 'POST' }),
   me: () => request<{ id: string; email: string; name: string; role: string }>('/auth/me'),
 };
 
@@ -130,9 +121,7 @@ export const uploadApi = {
   upload: async (file: File): Promise<{ url: string }> => {
     const form = new FormData();
     form.append('files', file);
-    const headers: Record<string, string> = {};
-    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-    const res = await fetch(`${BASE}/upload`, { method: 'POST', body: form, headers });
+    const res = await fetch(`${BASE}/upload`, { method: 'POST', body: form, credentials: 'include' });
     if (!res.ok) {
       const text = await res.text();
       throw new Error(`Erro ao enviar imagem (${res.status}): ${text}`);
@@ -141,17 +130,14 @@ export const uploadApi = {
     return { url: data.urls[0] };
   },
   uploadMultiple: async (files: File[]): Promise<string[]> => {
-    const form = new FormData();
-    files.forEach((f) => form.append('files', f));
-    const headers: Record<string, string> = {};
-    if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-    const res = await fetch(`${BASE}/upload`, { method: 'POST', body: form, headers });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Erro ao enviar imagens (${res.status}): ${text}`);
+    // Send one image at a time so the backend never has to decode several large
+    // photos concurrently on a memory-constrained machine.
+    const urls: string[] = [];
+    for (const file of files) {
+      const { url } = await uploadApi.upload(file);
+      urls.push(url);
     }
-    const data = await res.json();
-    return data.urls;
+    return urls;
   },
 };
 

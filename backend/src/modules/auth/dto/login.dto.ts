@@ -5,7 +5,7 @@ export class LoginDto {
   email: string;
 
   @IsString()
-  @MinLength(3)
+  @MinLength(1)
   password: string;
 }
 
@@ -17,6 +17,6 @@ export class RegisterDto {
   email: string;
 
   @IsString()
-  @MinLength(3)
+  @MinLength(10)
   password: string;
 }
