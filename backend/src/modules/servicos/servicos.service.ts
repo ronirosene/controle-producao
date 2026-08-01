@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import { Readable } from 'stream';
 
-const ADMIN_EMAILS = ['ronyrosene@gmail.com', 'pcp@moveispelinson.com.br'];
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'ronyrosene@gmail.com,pcp@moveispelinson.com.br')
+  .split(',').map((email) => email.trim().toLowerCase()).filter(Boolean);
 
 @Injectable()
 export class ServicosService {
@@ -45,7 +47,7 @@ export class ServicosService {
   }
 
   async update(id: number, data: { nome?: string; dataInicio?: string }, userEmail: string) {
-    if (!ADMIN_EMAILS.includes(userEmail)) {
+    if (!ADMIN_EMAILS.includes(userEmail.toLowerCase())) {
       throw new ForbiddenException('Apenas usuários autorizados podem editar o serviço');
     }
     const updates: any = {};
@@ -59,10 +61,21 @@ export class ServicosService {
   }
 
   async importFile(buffer: Buffer, filename: string) {
-    const workbook = XLSX.read(buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    if (!sheetName) throw new BadRequestException('Planilha vazia');
-    const rows: any[][] = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: '' });
+    const workbook = new ExcelJS.Workbook();
+    if (filename.toLowerCase().endsWith('.csv')) {
+      await workbook.csv.read(Readable.from(buffer));
+    } else if (filename.toLowerCase().endsWith('.xlsx')) {
+      await workbook.xlsx.load(buffer as any);
+    } else {
+      throw new BadRequestException('Formato não suportado. Use XLSX ou CSV.');
+    }
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) throw new BadRequestException('Planilha vazia');
+    const rows: any[][] = [];
+    worksheet.eachRow({ includeEmpty: true }, (row) => {
+      const values = Array.isArray(row.values) ? row.values.slice(1) : [];
+      rows.push(values.map((value: any) => value?.text ?? value?.result ?? value ?? ''));
+    });
     if (!rows.length) throw new BadRequestException('Nenhuma linha encontrada');
 
     const nomeServico = filename.replace(/\.[^.]+$/, '').trim();
@@ -117,7 +130,7 @@ export class ServicosService {
   }
 
   async remove(id: number, userEmail: string) {
-    if (!ADMIN_EMAILS.includes(userEmail)) {
+    if (!ADMIN_EMAILS.includes(userEmail.toLowerCase())) {
       throw new ForbiddenException('Apenas usuários autorizados podem excluir serviços');
     }
     const servico = await this.prisma.servico.findUnique({ where: { id } });

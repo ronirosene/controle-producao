@@ -2,9 +2,11 @@ import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards, Req, ParseI
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ServicosService } from './servicos.service';
+import { RequireFeatures } from '../../common/auth.decorators';
 
 @Controller('servicos')
 @UseGuards(AuthGuard('jwt'))
+@RequireFeatures('PRODUCAO_SERVICOS')
 export class ServicosController {
   constructor(private readonly service: ServicosService) {}
 
@@ -14,7 +16,16 @@ export class ServicosController {
   }
 
   @Post('import')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', {
+    limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+    fileFilter: (_request, file, callback) => {
+      if (!/\.(xlsx|csv)$/i.test(file.originalname)) {
+        callback(new BadRequestException('Formato não suportado. Use XLSX ou CSV.'), false);
+        return;
+      }
+      callback(null, true);
+    },
+  }))
   importFile(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('Nenhum arquivo enviado');
     return this.service.importFile(file.buffer, file.originalname);

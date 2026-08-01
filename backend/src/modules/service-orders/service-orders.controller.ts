@@ -4,8 +4,10 @@ import { Request } from 'express';
 import { ServiceOrdersService } from './service-orders.service';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
+import { RequireFeatures } from '../../common/auth.decorators';
 
 @Controller('service-orders')
+@RequireFeatures('ASSISTENCIA_ORDENS')
 export class ServiceOrdersController {
   constructor(private readonly service: ServiceOrdersService) {}
 
@@ -23,27 +25,27 @@ export class ServiceOrdersController {
   @UseGuards(AuthGuard('jwt'))
   create(@Body() dto: CreateServiceOrderDto, @Req() req: Request) {
     const user = (req as any).user;
-    return this.service.create(dto, user?.id);
+    return this.service.create(dto, user?.userId);
   }
 
   @Put(':id')
   @UseGuards(AuthGuard('jwt'))
   update(@Param('id') id: string, @Body() dto: UpdateServiceOrderDto, @Req() req: Request) {
     const user = (req as any).user;
-    return this.service.update(id, dto, user?.id);
+    return this.service.update(id, dto, user?.userId);
   }
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'))
   remove(@Param('id') id: string, @Req() req: Request) {
     const user = (req as any).user;
-    return this.service.remove(id, user?.id);
+    return this.service.remove(id, user?.userId);
   }
 
   @Post(':id/create-production-service')
   @UseGuards(AuthGuard('jwt'))
   createProductionService(@Param('id') id: string, @Req() req: Request) {
     const user = (req as any).user;
-    return this.service.createProductionService(id, user?.id);
+    return this.service.createProductionService(id, user?.userId);
   }
 }

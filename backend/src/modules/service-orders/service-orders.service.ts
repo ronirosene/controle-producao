@@ -33,6 +33,7 @@ export class ServiceOrdersService {
         items: { include: { product: true } },
       },
       orderBy: { pedido: 'desc' },
+      take: 100,
     });
   }
 
@@ -153,15 +154,16 @@ export class ServiceOrdersService {
       });
 
       this.logger.log(`Order created: ${order.id}`);
-      this.email.sendNewOrderNotification(order);
-      this.autoRegisterOrderData(dto);
+      await this.email.sendNewOrderNotification(order).catch((error) =>
+        this.logger.warn(`Falha ao enviar notificação da nova ordem: ${error.message}`));
+      await this.autoRegisterOrderData(dto);
       const userName = userId ? (await this.prisma.user.findUnique({ where: { id: userId } }))?.name : undefined;
       await this.persistLog('ASSISTENCIA_CRIACAO', `Pedido #${order.pedido} criado — Cliente: ${order.customer.name}`, order, userName);
       return order;
     } catch (err: any) {
       const msg = err?.message || JSON.stringify(err);
       this.logger.error(`Failed to create order: ${msg}`, err?.stack);
-      throw new InternalServerErrorException(msg);
+      throw new InternalServerErrorException('Não foi possível criar a ordem de serviço');
     }
   }
 
@@ -247,7 +249,8 @@ export class ServiceOrdersService {
       const hadFinanceiroBefore = existing.items?.some(i => i.price != null);
       const hasFinanceiroNow = updated.items?.some(i => i.price != null);
       if (!hadFinanceiroBefore && hasFinanceiroNow) {
-        this.email.sendFinanceiroUpdateNotification(updated);
+        await this.email.sendFinanceiroUpdateNotification(updated).catch((error) =>
+          this.logger.warn(`Falha ao enviar notificação financeira: ${error.message}`));
       }
 
       const allChargeableHavePrice = updated.items
@@ -262,7 +265,7 @@ export class ServiceOrdersService {
         updated.status = 'AGUARDANDO_AUT_CLIENTE';
       }
 
-      this.autoRegisterOrderData(dto);
+      await this.autoRegisterOrderData(dto);
       const userName = userId ? (await this.prisma.user.findUnique({ where: { id: userId } }))?.name : undefined;
 
       const pedidoLabel = `#${updated.pedido || updated.id.slice(0, 8)}`;
@@ -284,7 +287,7 @@ export class ServiceOrdersService {
     } catch (err: any) {
       const msg = err?.message || JSON.stringify(err);
       this.logger.error(`Failed to update order ${id}: ${msg}`, err?.stack);
-      throw new InternalServerErrorException(msg);
+      throw new InternalServerErrorException('Não foi possível atualizar a ordem de serviço');
     }
   }
 
@@ -292,6 +295,10 @@ export class ServiceOrdersService {
     try {
       this.logger.log(`Creating production service from order ${id}`);
       const order = await this.findOne(id);
+
+      if (order.servicoId) {
+        return { servicoId: order.servicoId, message: 'Esta ordem já possui um serviço de produção vinculado' };
+      }
 
       if (!order.items || order.items.length === 0) {
         throw new Error('Pedido sem produtos para criar serviço de produção');
@@ -306,21 +313,24 @@ export class ServiceOrdersService {
       const now = new Date().toISOString();
 
       const today = new Date().toISOString().split('T')[0];
-      const servico = await this.prisma.servico.create({
+      const servico = await this.prisma.$transaction(async (tx) => {
+        const current = await tx.serviceOrder.findUnique({ where: { id }, select: { servicoId: true } });
+        if (current?.servicoId) return tx.servico.findUniqueOrThrow({ where: { id: current.servicoId } });
+        const created = await tx.servico.create({
         data: {
           nome: `Assistência - ${pedidoLabel}`,
           createdAt: now,
           dataInicio: today,
         },
-      });
+        });
 
-      this.logger.log(`Servico created: ${servico.id} - ${servico.nome}`);
+        this.logger.log(`Servico created: ${created.id} - ${created.nome}`);
 
       // Create a Produto for each item
-      for (const item of order.items) {
-        const produto = await this.prisma.produto.create({
+        for (const item of order.items) {
+        const produto = await tx.produto.create({
           data: {
-            servicoId: servico.id,
+            servicoId: created.id,
             nome: item.product?.name || item.problemDesc || 'Produto',
             cor: item.color || '',
             detalhe: item.fabric || '',
@@ -331,7 +341,7 @@ export class ServiceOrdersService {
         });
 
         // Create initial movimentacao at marcenaria
-        await this.prisma.movimentacao.create({
+        await tx.movimentacao.create({
           data: {
             produtoId: produto.id,
             setor: 'marcenaria',
@@ -342,12 +352,14 @@ export class ServiceOrdersService {
         });
 
         this.logger.log(`Produto created: ${produto.id} - ${produto.nome}`);
-      }
+        }
 
       // Link the ServiceOrder to the Servico
-      await this.prisma.serviceOrder.update({
+        await tx.serviceOrder.update({
         where: { id },
-        data: { servicoId: servico.id },
+        data: { servicoId: created.id },
+      });
+        return created;
       });
 
       this.logger.log(`ServiceOrder ${id} linked to Servico ${servico.id}`);
@@ -359,7 +371,7 @@ export class ServiceOrdersService {
     } catch (err: any) {
       const msg = err?.message || JSON.stringify(err);
       this.logger.error(`Failed to create production service: ${msg}`, err?.stack);
-      throw new InternalServerErrorException(msg);
+      throw new InternalServerErrorException('Não foi possível criar o serviço de produção');
     }
   }
 
@@ -372,7 +384,7 @@ export class ServiceOrdersService {
     } catch (err: any) {
       const msg = err?.message || JSON.stringify(err);
       this.logger.error(`Failed to remove order ${id}: ${msg}`, err?.stack);
-      throw err instanceof NotFoundException ? err : new InternalServerErrorException(msg);
+      throw err instanceof NotFoundException ? err : new InternalServerErrorException('Não foi possível excluir a ordem de serviço');
     }
   }
 }

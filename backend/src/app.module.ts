@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { PrismaModule } from './prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CustomersModule } from './modules/customers/customers.module';
@@ -13,6 +14,9 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { UsersModule } from './modules/users/users.module';
 import { EmailModule } from './modules/email/email.module';
 import { AssistenciaRegistersModule } from './modules/assistencia-registers/assistencia-registers.module';
+import { FeatureGuard, JwtAuthGuard, RateLimitGuard } from './common/auth.guards';
+import { RequestLoggingInterceptor } from './common/request-logging.interceptor';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -30,6 +34,13 @@ import { AssistenciaRegistersModule } from './modules/assistencia-registers/assi
     UsersModule,
     EmailModule,
     AssistenciaRegistersModule,
+  ],
+  controllers: [HealthController],
+  providers: [
+    { provide: APP_GUARD, useClass: RateLimitGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: FeatureGuard },
+    { provide: APP_INTERCEPTOR, useClass: RequestLoggingInterceptor },
   ],
 })
 export class AppModule {}

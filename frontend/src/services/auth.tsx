@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { authApi, setAuthToken, getAuthToken, onAuthChange } from './api';
+import { authApi, onAuthChange } from './api';
 
 interface User {
   id: string;
@@ -29,18 +29,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getAuthToken();
-    if (token) {
-      authApi.me()
-        .then(setUser)
-        .catch(() => {
-          setAuthToken(null);
-          localStorage.removeItem('auth_token');
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    authApi.me()
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
   }, []);
 
   // Heartbeat: check if token is still valid every 2min
@@ -61,21 +53,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return onAuthChange((token) => {
       if (!token) {
         setUser(null);
-        localStorage.removeItem('auth_token');
       }
     });
   }, []);
 
   const login = async (email: string, password: string) => {
     const res = await authApi.login(email, password);
-    setAuthToken(res.token);
-    localStorage.setItem('auth_token', res.token);
     setUser(res.user);
   };
 
   const logout = () => {
-    setAuthToken(null);
-    localStorage.removeItem('auth_token');
+    void authApi.logout().catch(() => undefined);
     setUser(null);
   };
 

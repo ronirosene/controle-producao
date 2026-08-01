@@ -2,8 +2,10 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { RequireFeatures } from '../../common/auth.decorators';
 
 @Controller('customers')
+@RequireFeatures('ASSISTENCIA_CLIENTES', 'ASSISTENCIA_ORDENS')
 export class CustomersController {
   constructor(private readonly service: CustomersService) {}
 

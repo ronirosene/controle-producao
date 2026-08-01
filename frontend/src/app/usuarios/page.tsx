@@ -14,7 +14,7 @@ export default function UsuariosPage() {
 
   const load = () => {
     fetch('/api/users', {
-      headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+      credentials: 'include',
     }).then((r) => r.json()).then(setUsers).catch(() => {});
   };
 
@@ -22,7 +22,7 @@ export default function UsuariosPage() {
 
   if (!user) return null;
 
-  const hasAdmin = user.email === 'ronyrosene@gmail.com';
+  const hasAdmin = user.features?.includes('ADMIN_USUARIOS') || user.email === 'ronyrosene@gmail.com';
 
   if (!hasAdmin) {
     return (
@@ -42,10 +42,9 @@ export default function UsuariosPage() {
             onClick={async () => {
               setFixing(true);
               try {
-                const token = localStorage.getItem('auth_token');
                 const res = await fetch('/api/users/fix-features', {
                   method: 'POST',
-                  headers: { Authorization: `Bearer ${token}` },
+                  credentials: 'include',
                 });
                 const data = await res.json();
                 alert(`${data.updated} usuário(s) corrigido(s)!`);
@@ -109,7 +108,7 @@ export default function UsuariosPage() {
                       if (confirm(`Excluir usuário ${u.name}?`)) {
                         await fetch(`/api/users/${u.id}`, {
                           method: 'DELETE',
-                          headers: { Authorization: `Bearer ${localStorage.getItem('auth_token')}` },
+                          credentials: 'include',
                         });
                         load();
                       }
@@ -143,24 +142,22 @@ function UserForm({ editUser, onClose, onSaved }: { editUser: any | null; onClos
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = localStorage.getItem('auth_token');
-    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+    const headers = { 'Content-Type': 'application/json' };
 
     if (editUser) {
       const body: any = { name, email, features };
       if (password) body.password = password;
-      await fetch(`/api/users/${editUser.id}`, { method: 'PUT', headers, body: JSON.stringify(body) });
+      await fetch(`/api/users/${editUser.id}`, { method: 'PUT', headers, credentials: 'include', body: JSON.stringify(body) });
     } else {
       await fetch('/api/users', {
         method: 'POST',
         headers,
+        credentials: 'include',
         body: JSON.stringify({ name, email, password, features }),
       });
     }
     onSaved();
   };
-
-  const isMe = editUser && editUser.id === JSON.parse(atob(localStorage.getItem('auth_token')!.split('.')[1])).userId;
 
   return (
     <div className="fixed inset-0 bg-black/40 z-[60] flex items-start justify-center pt-10 overflow-y-auto">
@@ -189,7 +186,7 @@ function UserForm({ editUser, onClose, onSaved }: { editUser: any | null; onClos
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full border rounded-lg px-3 py-2 text-sm"
                 required={!editUser}
-                minLength={3}
+                minLength={10}
               />
             </div>
 

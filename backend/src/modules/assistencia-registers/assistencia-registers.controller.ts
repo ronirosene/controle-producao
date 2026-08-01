@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, Query, ParseIntPipe } from '@nestjs/common';
 import { AssistenciaRegistersService } from './assistencia-registers.service';
+import { RequireFeatures } from '../../common/auth.decorators';
 
 @Controller('assistencia')
+@RequireFeatures('ASSISTENCIA_ORDENS')
 export class AssistenciaRegistersController {
   constructor(private service: AssistenciaRegistersService) {}
 

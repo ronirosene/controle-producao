@@ -3,15 +3,16 @@ WORKDIR /app
 RUN apt-get update -qq && apt-get install -y -qq python3 make g++ ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY backend/package*.json ./
 RUN npm config set cache /tmp/npm-cache --global && npm cache clean --force
-RUN npm install --no-cache
+RUN npm ci
 COPY backend/ .
 RUN npx prisma generate
 RUN npm run build
+RUN npm prune --omit=dev
 
 FROM node:20-bookworm-slim AS frontend-builder
 WORKDIR /app
 COPY frontend/package*.json ./
-RUN npm install
+RUN npm ci
 COPY frontend/ .
 RUN npm run build
 
