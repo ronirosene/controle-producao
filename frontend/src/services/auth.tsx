@@ -43,7 +43,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await authApi.me();
       } catch {
         logout();
-        window.location.href = '/login';
+        if (window.location.pathname !== '/login') {
+          window.location.replace('/login');
+        }
       }
     }, 120_000);
     return () => clearInterval(interval);
