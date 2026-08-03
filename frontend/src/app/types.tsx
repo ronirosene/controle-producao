@@ -11,7 +11,7 @@ export function StatusBadge({ status }: { status: string }) {
     EM_PRODUCAO: 'bg-indigo-100 text-indigo-800',
     AGUARDANDO_FINANCEIRO: 'bg-orange-100 text-orange-800',
     AGUARDANDO_AUT_CLIENTE: 'bg-pink-100 text-pink-800',
-    AUTORIZADO_CLIENTE: 'bg-teal-100 text-teal-800',
+    AGUARDANDO_PRODUCAO: 'bg-teal-100 text-teal-800',
     APROVADO: 'bg-green-100 text-green-800',
     FINALIZADO: 'bg-gray-100 text-gray-800',
   };

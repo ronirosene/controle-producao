@@ -147,16 +147,17 @@ model ServiceProduct {
 
 /// Ordem de Serviço de Assistência
 model ServiceOrder {
-  id          String   @id @default(uuid())
-  pedido      Int?
-  customerId  String
-  entryDate   DateTime @default(now())
-  billingDate DateTime?
-  status      String   @default("AGUARDANDO_FINANCEIRO")
-  notes       String?
-  userId      Int?     @map("user_id")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid())
+  pedido        Int?
+  customerId    String
+  entryDate     DateTime @default(now())
+  billingDate   DateTime?
+  status        String   @default("AGUARDANDO_FINANCEIRO")
+  notes         String?
+  userId        Int?     @map("user_id")
+  finishedImages String?  @map("finished_images")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   customer Customer          @relation(fields: [customerId], references: [id])
   items    ServiceOrderItem[]

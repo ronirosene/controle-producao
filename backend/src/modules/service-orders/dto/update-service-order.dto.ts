@@ -75,6 +75,10 @@ export class UpdateServiceOrderDto {
   notes?: string;
 
   @IsOptional()
+  @IsString()
+  finishedImages?: string;
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UpdateServiceOrderItemDto)

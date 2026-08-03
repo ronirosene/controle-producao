@@ -179,6 +179,7 @@ export class ServiceOrdersService {
       if (dto.billingDate !== undefined) data.billingDate = new Date(dto.billingDate);
       if (dto.status !== undefined) data.status = dto.status;
       if (dto.notes !== undefined) data.notes = dto.notes;
+      if (dto.finishedImages !== undefined) data.finishedImages = dto.finishedImages;
       if (userId !== undefined) data.userId = userId;
 
       if (dto.customerName) {
@@ -246,30 +247,36 @@ export class ServiceOrdersService {
         },
       });
 
-      const hadFinanceiroBefore = existing.items?.some(i => i.price != null);
-      const hasFinanceiroNow = updated.items?.some(i => i.price != null);
-      if (!hadFinanceiroBefore && hasFinanceiroNow) {
-        await this.email.sendFinanceiroUpdateNotification(updated).catch((error) =>
-          this.logger.warn(`Falha ao enviar notificação financeira: ${error.message}`));
-      }
+      const wasFinanceiro = existing.status === 'AGUARDANDO_FINANCEIRO';
 
       const allChargeableHavePrice = updated.items
         .filter(i => i.chargeable === true)
         .every(i => i.price != null && i.price > 0);
       const hasChargeableItems = updated.items.some(i => i.chargeable === true);
-      if (existing.status === 'AGUARDANDO_FINANCEIRO' && hasChargeableItems && allChargeableHavePrice) {
+      if (wasFinanceiro && hasChargeableItems && allChargeableHavePrice) {
         await this.prisma.serviceOrder.update({
           where: { id },
           data: { status: 'AGUARDANDO_AUT_CLIENTE' },
         });
         updated.status = 'AGUARDANDO_AUT_CLIENTE';
+      } else if (wasFinanceiro && !hasChargeableItems) {
+        await this.prisma.serviceOrder.update({
+          where: { id },
+          data: { status: 'AGUARDANDO_PRODUCAO' },
+        });
+        updated.status = 'AGUARDANDO_PRODUCAO';
+      }
+
+      if (wasFinanceiro && updated.status !== 'AGUARDANDO_FINANCEIRO') {
+        this.email.sendFinanceiroUpdateNotification(updated).catch((error) =>
+          this.logger.warn(`Falha ao enviar notificação financeira: ${error.message}`));
       }
 
       await this.autoRegisterOrderData(dto);
       const userName = userId ? (await this.prisma.user.findUnique({ where: { id: userId } }))?.name : undefined;
 
       const pedidoLabel = `#${updated.pedido || updated.id.slice(0, 8)}`;
-      if (!hadFinanceiroBefore && hasFinanceiroNow) {
+      if (wasFinanceiro) {
         for (const item of updated.items) {
           if (item.price != null) {
             await this.persistLog('FINANCEIRO_VALOR', `Pedido ${pedidoLabel} — Valor definido: R$ ${Number(item.price).toFixed(2)} (${item.product?.name || ''})`, updated, userName);
@@ -305,7 +312,7 @@ export class ServiceOrdersService {
       }
 
       const allNotChargeable = order.items.every(i => i.chargeable === false);
-      if (!allNotChargeable && order.status !== 'AUTORIZADO_CLIENTE') {
+      if (!allNotChargeable && order.status !== 'AGUARDANDO_PRODUCAO') {
         throw new Error('Ordem precisa estar autorizada pelo cliente para criar serviço de produção');
       }
 

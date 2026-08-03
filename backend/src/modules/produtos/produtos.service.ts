@@ -56,19 +56,20 @@ export class ProdutosService {
     if (!prod) throw new NotFoundException('Produto não encontrado');
 
     const origem = await this.prisma.movimentacao.findFirst({
-      where: { produtoId, setor: data.setor_origem },
+      where: { produtoId, setor: data.setor_origem, quantidade: { gt: 0 } },
+      orderBy: { id: 'desc' },
     });
 
-    if (!origem || !origem.quantidade || origem.quantidade < data.quantidade) {
+    if (!origem || (origem.quantidade ?? 0) < data.quantidade) {
       throw new BadRequestException(
-        `Quantidade insuficiente em ${data.setor_origem}. Disponível: ${origem?.quantidade || 0}`,
+        `Quantidade insuficiente em "${data.setor_origem}". Disponível: ${origem?.quantidade || 0} — produto: ${prod.nome}`,
       );
     }
 
     const obs = (data.observacao || '').trim();
     const dataMov = data.data_movimento || new Date().toISOString().split('T')[0];
 
-    const novaQtdOrigem = (origem.quantidade || 0) - data.quantidade;
+    const novaQtdOrigem = (origem.quantidade ?? 0) - data.quantidade;
 
     if (novaQtdOrigem === 0) {
       await this.prisma.movimentacao.update({

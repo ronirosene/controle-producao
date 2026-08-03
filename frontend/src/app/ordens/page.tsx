@@ -57,7 +57,7 @@ export default function OrdensPage() {
           <option value="AGUARDANDO">Aguardando</option>
           <option value="AGUARDANDO_FINANCEIRO">Aguardando Financeiro</option>
           <option value="AGUARDANDO_AUT_CLIENTE">Aguardando Aut. Cliente</option>
-          <option value="AUTORIZADO_CLIENTE">Autorizado pelo Cliente</option>
+          <option value="AGUARDANDO_PRODUCAO">Aguardando Produção</option>
           <option value="EM_ANDAMENTO">Em Andamento</option>
           <option value="CONCLUIDO">Concluído</option>
           <option value="ENTREGUE">Entregue</option>
@@ -136,7 +136,13 @@ export default function OrdensPage() {
                     {imgs.length > 0 ? (
                       <div className="flex -space-x-1">
                         {imgs.slice(0, 3).map((url, i) => (
-                          <img key={i} src={url} alt="" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
+                          isDocumentUrl(url) ? (
+                            <div key={i} className="w-7 h-7 rounded-full border-2 border-white bg-green-700 flex items-center justify-center text-white text-[10px] font-bold">X</div>
+                          ) : isVideoUrl(url) ? (
+                            <div key={i} className="w-7 h-7 rounded-full border-2 border-white bg-gray-800 flex items-center justify-center text-white text-[10px]">▶</div>
+                          ) : (
+                            <img key={i} src={url} alt="" className="w-7 h-7 rounded-full border-2 border-white object-cover" />
+                          )
                         ))}
                         {imgs.length > 3 && <span className="w-7 h-7 rounded-full bg-gray-100 border-2 border-white text-[10px] flex items-center justify-center text-gray-500">+{imgs.length - 3}</span>}
                       </div>
@@ -183,6 +189,16 @@ function Lightbox({ images, currentIndex, onClose, onPrev, onNext }: { images: s
     return () => window.removeEventListener('keydown', handler);
   }, [onClose, onPrev, onNext]);
 
+  const url = images[currentIndex];
+  const isVideo = url && isVideoUrl(url);
+  const isDoc = url && isDocumentUrl(url);
+
+  if (isDoc) {
+    window.open(url, '_blank');
+    onClose();
+    return null;
+  }
+
   return (
     <div className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center" onClick={onClose}>
       <button onClick={onClose} className="absolute top-4 right-4 text-white/70 hover:text-white text-3xl z-10">&times;</button>
@@ -193,29 +209,47 @@ function Lightbox({ images, currentIndex, onClose, onPrev, onNext }: { images: s
           <div className="absolute bottom-4 text-white/60 text-sm z-10">{currentIndex + 1} / {images.length}</div>
         </>
       )}
-      <img
-        src={images[currentIndex]}
-        alt=""
-        className="max-w-[90vw] max-h-[90vh] object-contain"
-        onClick={(e) => e.stopPropagation()}
-      />
+      {isVideo ? (
+        <video src={url} controls autoPlay className="max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()} />
+      ) : (
+        <img src={url} alt="" className="max-w-[90vw] max-h-[90vh] object-contain" onClick={(e) => e.stopPropagation()} />
+      )}
     </div>
   );
 }
 
 function OrderDetailModal({ order, onClose, onImageClick, onRefresh }: { order: ServiceOrder; onClose: () => void; onImageClick: (images: string[], idx: number) => void; onRefresh: () => void }) {
   const [creating, setCreating] = useState(false);
+  const [finishFiles, setFinishFiles] = useState<File[]>([]);
+  const [uploadingFinish, setUploadingFinish] = useState(false);
 
   const handleStatusChange = async (newStatus: string) => {
-    await serviceOrdersApi.update(order.id, { status: newStatus });
-    onRefresh();
+    if (newStatus === 'CONCLUIDO' && finishFiles.length === 0) {
+      alert('Selecione ao menos uma imagem do resultado antes de concluir.');
+      return;
+    }
+    try {
+      let finishedImages: string | undefined;
+      if (newStatus === 'CONCLUIDO' && finishFiles.length > 0) {
+        setUploadingFinish(true);
+        const urls = await uploadApi.uploadMultiple(finishFiles);
+        finishedImages = JSON.stringify(urls);
+        setUploadingFinish(false);
+      }
+      await serviceOrdersApi.update(order.id, { status: newStatus, finishedImages });
+      onRefresh();
+      onClose();
+    } catch (err: any) {
+      setUploadingFinish(false);
+      alert(err.message || 'Erro ao alterar status');
+    }
   };
 
   const getNextStatus = () => {
     const flow: Record<string, string> = {
       AGUARDANDO: 'AGUARDANDO_FINANCEIRO',
-      AGUARDANDO_AUT_CLIENTE: 'AUTORIZADO_CLIENTE',
-      AUTORIZADO_CLIENTE: 'EM_ANDAMENTO',
+      AGUARDANDO_AUT_CLIENTE: 'AGUARDANDO_PRODUCAO',
+      AGUARDANDO_PRODUCAO: 'EM_ANDAMENTO',
       EM_ANDAMENTO: 'CONCLUIDO',
       CONCLUIDO: 'ENTREGUE',
     };
@@ -225,12 +259,13 @@ function OrderDetailModal({ order, onClose, onImageClick, onRefresh }: { order: 
   const nextStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
       AGUARDANDO_AUT_CLIENTE: 'Autorizado pelo Cliente',
+      AGUARDANDO_PRODUCAO: 'Aguardando Produção',
     };
     return labels[status] || status.replace(/_/g, ' ');
   };
 
   const allNotChargeable = order.items?.every(i => i.chargeable === false) ?? false;
-  const canCreateProduction = allNotChargeable || order.status === 'AUTORIZADO_CLIENTE';
+  const canCreateProduction = allNotChargeable || order.status === 'AGUARDANDO_PRODUCAO';
 
   const handleCreateProduction = async () => {
     setCreating(true);
@@ -288,8 +323,18 @@ function OrderDetailModal({ order, onClose, onImageClick, onRefresh }: { order: 
                 {getImageList(item).length > 0 && (
                   <div className="grid grid-cols-4 gap-2 mt-2">
                     {getImageList(item).map((url, idx) => (
-                      <img key={idx} src={url} alt="" className="w-full h-20 object-cover rounded border cursor-pointer hover:opacity-80"
-                        onClick={() => onImageClick(getImageList(item), idx)} />
+                      isDocumentUrl(url) ? (
+                        <a key={idx} href={url} target="_blank" rel="noopener noreferrer"
+                          className="w-full h-20 bg-green-50 rounded border flex flex-col items-center justify-center text-green-700 hover:bg-green-100 text-xs gap-1">
+                          <span className="text-lg font-bold">XLS</span>
+                          <span>Abrir</span>
+                        </a>
+                      ) : isVideoUrl(url) ? (
+                        <video key={idx} src={url} controls className="w-full h-20 object-cover rounded border bg-black" />
+                      ) : (
+                        <img key={idx} src={url} alt="" className="w-full h-20 object-cover rounded border cursor-pointer hover:opacity-80"
+                          onClick={() => onImageClick(getImageList(item), idx)} />
+                      )
                     ))}
                   </div>
                 )}
@@ -297,13 +342,59 @@ function OrderDetailModal({ order, onClose, onImageClick, onRefresh }: { order: 
             ))}
           </div>
 
+          {(() => {
+            let finishImgs: string[] = [];
+            if (order.finishedImages) {
+              try { finishImgs = JSON.parse(order.finishedImages); } catch { /* ignore */ }
+            }
+            if (finishImgs.length === 0) return null;
+            return (
+              <div className="border-t pt-3">
+                <h3 className="font-medium mb-2">Resultado (Após Assistência)</h3>
+                <div className="grid grid-cols-4 gap-2">
+                  {finishImgs.map((url, idx) => (
+                    isDocumentUrl(url) ? (
+                      <a key={idx} href={url} target="_blank" rel="noopener noreferrer"
+                        className="w-full h-20 bg-green-50 rounded border flex flex-col items-center justify-center text-green-700 hover:bg-green-100 text-xs gap-1">
+                        <span className="text-lg font-bold">XLS</span>
+                        <span>Abrir</span>
+                      </a>
+                    ) : isVideoUrl(url) ? (
+                      <video key={idx} src={url} controls className="w-full h-20 object-cover rounded border bg-black" />
+                    ) : (
+                      <img key={idx} src={url} alt="" className="w-full h-20 object-cover rounded border cursor-pointer hover:opacity-80"
+                        onClick={() => onImageClick(finishImgs, idx)} />
+                    )
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="flex flex-col gap-2">
+            {getNextStatus() === 'CONCLUIDO' && (
+              <div className="border rounded-lg p-3 bg-yellow-50">
+                <label className="font-medium text-sm text-yellow-800 block mb-1">Imagens do Resultado (obrigatório, vídeos até 25MB)</label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*,video/*"
+                  onChange={(e) => setFinishFiles(Array.from(e.target.files || []))}
+                  className="text-sm"
+                />
+                {finishFiles.length > 0 && (
+                  <p className="text-xs text-green-700 mt-1">{finishFiles.length} arquivo(s) selecionado(s)</p>
+                )}
+              </div>
+            )}
+
             {getNextStatus() && (
               <button
                 onClick={() => handleStatusChange(getNextStatus())}
-                className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 text-sm"
+                disabled={uploadingFinish}
+                className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 text-sm disabled:opacity-50"
               >
-                {nextStatusLabel(getNextStatus())}
+                {uploadingFinish ? 'Enviando imagens...' : nextStatusLabel(getNextStatus())}
               </button>
             )}
 
@@ -347,6 +438,14 @@ interface ItemForm {
   existingImages: string[];
   newImageFiles: File[];
   newImagePreviews: string[];
+}
+
+function isVideoUrl(url: string): boolean {
+  return /\.(mp4|webm|mov|avi|mkv)$/i.test(url);
+}
+
+function isDocumentUrl(url: string): boolean {
+  return /\.(xlsx|xls)$/i.test(url);
 }
 
 function toLocalDatetime(date: Date): string {
@@ -809,26 +908,46 @@ function OrderFormModal({ user, editId, editPedido, onClose, onSaved }: { user: 
                 </div>
 
                 <div className="mt-3">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Imagens do Produto</label>
-                  <input type="file" accept="image/*" multiple
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Imagens do Produto <span className="text-gray-400">(vídeos até 25MB)</span></label>
+                  <input type="file" accept="image/*,video/*,.xlsx,.xls" multiple
                     onChange={(e) => handleItemFiles(idx, e.target.files)}
                     className="text-sm w-full" />
                   {(item.newImagePreviews.length > 0 || item.existingImages.length > 0) && (
                     <div className="grid grid-cols-4 gap-2 mt-2">
                       {item.existingImages.map((url, i) => (
                         <div key={`e-${i}`} className="relative group">
-                          <img src={url} alt="" className="w-full h-20 object-cover rounded border" />
+                          {isDocumentUrl(url) ? (
+                            <a href={url} target="_blank" rel="noopener noreferrer"
+                              className="w-full h-20 bg-green-50 rounded border flex items-center justify-center text-green-700 text-xs font-bold">
+                              XLS
+                            </a>
+                          ) : isVideoUrl(url) ? (
+                            <video src={url} controls className="w-full h-20 object-cover rounded border bg-black" />
+                          ) : (
+                            <img src={url} alt="" className="w-full h-20 object-cover rounded border" />
+                          )}
                           <button type="button" onClick={() => removeExistingImage(idx, i)}
                             className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100">&times;</button>
                         </div>
                       ))}
-                      {item.newImagePreviews.map((preview, i) => (
-                        <div key={`n-${i}`} className="relative group">
-                          <img src={preview} alt="" className="w-full h-20 object-cover rounded border" />
-                          <button type="button" onClick={() => removeNewImage(idx, i)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100">&times;</button>
-                        </div>
-                      ))}
+                      {item.newImagePreviews.map((preview, i) => {
+                        const file = item.newImageFiles[i];
+                        const isVideo = file?.type.startsWith('video/');
+                        const isDoc = file?.name?.match(/\.(xlsx|xls)$/i);
+                        return (
+                          <div key={`n-${i}`} className="relative group">
+                            {isDoc ? (
+                              <div className="w-full h-20 bg-green-50 rounded border flex items-center justify-center text-green-700 text-xs font-bold">XLS</div>
+                            ) : isVideo ? (
+                              <div className="w-full h-20 bg-gray-800 rounded border flex items-center justify-center text-white text-2xl">▶</div>
+                            ) : (
+                              <img src={preview} alt="" className="w-full h-20 object-cover rounded border" />
+                            )}
+                            <button type="button" onClick={() => removeNewImage(idx, i)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100">&times;</button>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

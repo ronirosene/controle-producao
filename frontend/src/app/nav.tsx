@@ -25,8 +25,17 @@ export function Nav() {
     cadastros: true,
     configuracoes: true,
   });
+  const [diskUsage, setDiskUsage] = useState<{ percent: number; label: string } | null>(null);
 
   const toggle = (key: string) => setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
+
+  useEffect(() => {
+    if (!user || user.email !== 'ronyrosene@gmail.com') return;
+    fetch('/api/disk-usage', { credentials: 'include' })
+      .then(r => r.json())
+      .then(setDiskUsage)
+      .catch(() => {});
+  }, [user]);
 
   if (loading) return null;
 
@@ -177,6 +186,29 @@ export function Nav() {
             <I name={collapsed ? 'chevron-right' : 'chevron-left'} />
           </svg>
         </button>
+
+        {/* Disk usage (admin only) */}
+        {diskUsage && user.email === 'ronyrosene@gmail.com' && (
+          collapsed ? (
+            <div className="border-t border-blue-600 px-4 py-2 flex justify-center" title={diskUsage.label}>
+              <div className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: diskUsage.percent > 80 ? '#ef4444' : diskUsage.percent > 60 ? '#f59e0b' : '#22c55e' }}>
+              </div>
+            </div>
+          ) : (
+            <div className="border-t border-blue-600 px-4 py-2 shrink-0">
+              <div className="flex items-center justify-between text-[10px] text-blue-300 mb-1">
+                <span>Disco</span>
+                <span>{diskUsage.percent.toFixed(0)}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-blue-900 rounded-full overflow-hidden">
+                <div className="h-full rounded-full transition-all"
+                  style={{ width: `${Math.min(diskUsage.percent, 100)}%`, backgroundColor: diskUsage.percent > 80 ? '#ef4444' : diskUsage.percent > 60 ? '#f59e0b' : '#22c55e' }}>
+                </div>
+              </div>
+            </div>
+          )
+        )}
 
         {/* User info */}
         <div className="border-t border-blue-600 px-4 py-3 shrink-0">

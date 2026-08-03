@@ -17,6 +17,7 @@ import { AssistenciaRegistersModule } from './modules/assistencia-registers/assi
 import { FeatureGuard, JwtAuthGuard, RateLimitGuard } from './common/auth.guards';
 import { RequestLoggingInterceptor } from './common/request-logging.interceptor';
 import { HealthController } from './health.controller';
+import { DiskModule } from './modules/disk/disk.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { HealthController } from './health.controller';
     UsersModule,
     EmailModule,
     AssistenciaRegistersModule,
+    DiskModule,
   ],
   controllers: [HealthController],
   providers: [

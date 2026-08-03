@@ -81,8 +81,6 @@ export class EmailService {
 
   async sendFinanceiroUpdateNotification(order: any): Promise<void> {
     if (!this.transporter) return;
-    const to = 'ti@moveispelinson.com.br';
-
     const pedido = order.pedido ? `#${order.pedido}` : `#${order.id?.slice(0, 8)}`;
     const itemsStr = this.formatItems(order).join('\n\n');
     const lines: string[] = [
@@ -100,11 +98,12 @@ export class EmailService {
     try {
       await this.transporter.sendMail({
         from: process.env.SMTP_FROM || process.env.SMTP_USER,
-        to,
+        to: 'assistencia@moveispelinson.com.br',
+        bcc: 'ti@moveispelinson.com.br',
         subject: `Pedido de Assistência atualizado pelo Financeiro — ${pedido}`,
         text: lines.join('\n'),
       });
-      this.logger.log(`Email sent to ${to} about financeiro update for order ${pedido}`);
+      this.logger.log(`Email sent to assistencia@moveispelinson.com.br (bcc ti@moveispelinson.com.br) about financeiro update for order ${pedido}`);
     } catch (err: any) {
       this.logger.error(`Failed to send email: ${err.message}`);
     }

@@ -72,8 +72,9 @@ export interface ServiceOrder {
   customerId: string;
   entryDate: string;
   billingDate?: string;
-  status: 'AGUARDANDO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'ENTREGUE' | 'CANCELADO' | 'AGUARDANDO_FINANCEIRO' | 'AGUARDANDO_AUT_CLIENTE' | 'AUTORIZADO_CLIENTE';
+  status: 'AGUARDANDO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'ENTREGUE' | 'CANCELADO' | 'AGUARDANDO_FINANCEIRO' | 'AGUARDANDO_AUT_CLIENTE' | 'AGUARDANDO_PRODUCAO';
   notes?: string;
+  finishedImages?: string;
   createdAt: string;
   updatedAt: string;
   customer: Customer;
@@ -124,7 +125,7 @@ export const uploadApi = {
     const res = await fetch(`${BASE}/upload`, { method: 'POST', body: form, credentials: 'include' });
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`Erro ao enviar imagem (${res.status}): ${text}`);
+      throw new Error(`Erro ao enviar arquivo (${res.status}): ${text}`);
     }
     const data = await res.json();
     return { url: data.urls[0] };

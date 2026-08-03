@@ -28,6 +28,7 @@ export default function DashboardProducaoPage() {
 
   const ordensAbertas = orders.filter((o: any) => !['ENTREGUE', 'CANCELADO'].includes(o.status)).length;
   const aguardandoFinanceiro = orders.filter((o: any) => o.status === 'AGUARDANDO_FINANCEIRO').length;
+  const aguardandoProducao = orders.filter((o: any) => o.status === 'AGUARDANDO_PRODUCAO').length;
   const emAndamento = orders.filter((o: any) => o.status === 'EM_ANDAMENTO').length;
   const urgentesCount = urgentes.length;
 
@@ -45,6 +46,7 @@ export default function DashboardProducaoPage() {
         <Card label="Observações" value={data.observacoes_pendentes || 0} color="bg-orange-500" href="/observacoes" />
         <Card label="Ordens Abertas" value={ordensAbertas} color="bg-purple-500" href="/ordens" />
         <Card label="Aguardando Finan." value={aguardandoFinanceiro} color="bg-yellow-500" href="/ordens" />
+        <Card label="Aguardando Prod." value={aguardandoProducao} color="bg-teal-500" href="/ordens" />
         <Card label="Em Andamento" value={emAndamento} color="bg-cyan-500" href="/ordens" />
         <Card label="Prod. Urgentes" value={urgentesCount} color="bg-red-500" href="/urgentes" />
       </div>
