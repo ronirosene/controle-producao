@@ -23,8 +23,18 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
   });
   if (res.status === 401) {
-    if (typeof window !== 'undefined') window.location.href = '/login';
-    throw new Error('Não autorizado');
+    const isAuthCall = path.startsWith('/auth/');
+    const onLogin = typeof window !== 'undefined' && window.location.pathname === '/login';
+    if (!isAuthCall && !onLogin) {
+      window.location.href = '/login';
+    }
+    const body = await res.text();
+    let msg = 'Não autorizado';
+    try {
+      const parsed = JSON.parse(body);
+      if (parsed?.message) msg = Array.isArray(parsed.message) ? parsed.message.join(', ') : parsed.message;
+    } catch { /* corpo não-JSON */ }
+    throw new Error(msg);
   }
   if (!res.ok) {
     const err = await res.text();
