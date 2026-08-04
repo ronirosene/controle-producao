@@ -15,7 +15,25 @@ export function onAuthChange(cb: (token: string | null) => void) {
   return () => { authCallback = null; };
 }
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
+interface RequestConfig {
+  redirectOnUnauthorized?: boolean;
+}
+
+async function getErrorMessage(res: Response): Promise<string> {
+  const fallback = res.status === 401 ? 'Não autorizado' : `Erro ${res.status}`;
+
+  try {
+    const body = await res.json();
+    if (Array.isArray(body?.message)) return body.message.join(', ');
+    if (typeof body?.message === 'string') return body.message;
+  } catch {
+    // The response is not JSON; use the status-based fallback below.
+  }
+
+  return fallback;
+}
+
+async function request<T>(path: string, options?: RequestInit, config?: RequestConfig): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   const res = await fetch(`${BASE}${path}`, {
     credentials: 'include',
@@ -23,22 +41,15 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
   });
   if (res.status === 401) {
-    const isAuthCall = path.startsWith('/auth/');
-    const onLogin = typeof window !== 'undefined' && window.location.pathname === '/login';
-    if (!isAuthCall && !onLogin) {
-      window.location.href = '/login';
-    }
-    const body = await res.text();
-    let msg = 'Não autorizado';
-    try {
-      const parsed = JSON.parse(body);
-      if (parsed?.message) msg = Array.isArray(parsed.message) ? parsed.message.join(', ') : parsed.message;
-    } catch { /* corpo não-JSON */ }
-    throw new Error(msg);
+    const shouldRedirect = config?.redirectOnUnauthorized !== false
+      && typeof window !== 'undefined'
+      && window.location.pathname !== '/login';
+
+    if (shouldRedirect) window.location.replace('/login');
+    throw new Error(await getErrorMessage(res));
   }
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Erro ${res.status}: ${err}`);
+    throw new Error(await getErrorMessage(res));
   }
   return res.json();
 }
@@ -107,9 +118,21 @@ export function getImageList(order: ServiceOrder | ServiceOrderItem): string[] {
 
 export const authApi = {
   login: (email: string, password: string) =>
-    request<{ user: any }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  logout: () => request<{ ok: boolean }>('/auth/logout', { method: 'POST' }),
-  me: () => request<{ id: string; email: string; name: string; role: string }>('/auth/me'),
+    request<{ user: any }>(
+      '/auth/login',
+      { method: 'POST', body: JSON.stringify({ email, password }) },
+      { redirectOnUnauthorized: false },
+    ),
+  logout: () => request<{ ok: boolean }>(
+    '/auth/logout',
+    { method: 'POST' },
+    { redirectOnUnauthorized: false },
+  ),
+  me: () => request<{ id: string; email: string; name: string; role: string }>(
+    '/auth/me',
+    undefined,
+    { redirectOnUnauthorized: false },
+  ),
 };
 
 export const customersApi = {
