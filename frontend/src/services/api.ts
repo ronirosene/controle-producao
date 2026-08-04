@@ -152,24 +152,57 @@ export const productsApi = {
 };
 
 export const uploadApi = {
-  upload: async (file: File): Promise<{ url: string }> => {
+  upload: async (file: File, onProgress?: (loaded: number) => void): Promise<{ url: string }> => {
     const form = new FormData();
     form.append('files', file);
-    const res = await fetch(`${BASE}/upload`, { method: 'POST', body: form, credentials: 'include' });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Erro ao enviar arquivo (${res.status}): ${text}`);
-    }
-    const data = await res.json();
-    return { url: data.urls[0] };
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${BASE}/upload`);
+      xhr.withCredentials = true;
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) onProgress?.(Math.min(event.loaded, file.size));
+      };
+      xhr.onerror = () => reject(new Error('Falha de conexão durante o envio da imagem'));
+      xhr.onabort = () => reject(new Error('Envio da imagem cancelado'));
+      xhr.onload = () => {
+        let data: any;
+        try { data = JSON.parse(xhr.responseText); } catch { data = null; }
+
+        if (xhr.status < 200 || xhr.status >= 300) {
+          const message = Array.isArray(data?.message)
+            ? data.message.join(', ')
+            : data?.message || `Erro ao enviar imagem (${xhr.status})`;
+          reject(new Error(message));
+          return;
+        }
+        if (!data?.urls?.[0]) {
+          reject(new Error('O servidor não retornou a imagem enviada'));
+          return;
+        }
+        onProgress?.(file.size);
+        resolve({ url: data.urls[0] });
+      };
+      xhr.send(form);
+    });
   },
-  uploadMultiple: async (files: File[]): Promise<string[]> => {
+  uploadMultiple: async (files: File[], onProgress?: (percentage: number) => void): Promise<string[]> => {
     // Send one image at a time so the backend never has to decode several large
     // photos concurrently on a memory-constrained machine.
     const urls: string[] = [];
+    const totalBytes = files.reduce((total, file) => total + file.size, 0);
+    let completedBytes = 0;
+    onProgress?.(0);
     for (const file of files) {
-      const { url } = await uploadApi.upload(file);
+      const { url } = await uploadApi.upload(file, (loaded) => {
+        const percentage = totalBytes === 0
+          ? 100
+          : Math.round(((completedBytes + loaded) / totalBytes) * 100);
+        onProgress?.(Math.min(percentage, 99));
+      });
       urls.push(url);
+      completedBytes += file.size;
+      onProgress?.(totalBytes === 0 ? 100 : Math.round((completedBytes / totalBytes) * 100));
     }
     return urls;
   },

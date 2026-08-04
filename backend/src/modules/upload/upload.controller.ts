@@ -21,7 +21,9 @@ export class UploadController {
   @UseInterceptors(
     FilesInterceptor('files', 5, {
       storage: diskStorage({ destination: '/tmp' }),
-      limits: { fileSize: 10 * 1024 * 1024 },
+      // Files are streamed to /tmp, so high-resolution phone photos do not
+      // occupy the Node.js heap while they are being received.
+      limits: { fileSize: 25 * 1024 * 1024 },
       fileFilter: (_req, file, cb) => {
         if (!file.mimetype.match(/^image\//)) {
           cb(new BadRequestException('Apenas imagens são permitidas'), false);
