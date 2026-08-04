@@ -222,17 +222,29 @@ function OrderDetailModal({ order, onClose, onImageClick, onRefresh }: { order: 
   const [creating, setCreating] = useState(false);
   const [finishFiles, setFinishFiles] = useState<File[]>([]);
   const [uploadingFinish, setUploadingFinish] = useState(false);
+  const [finishUploadProgress, setFinishUploadProgress] = useState(0);
 
   const handleStatusChange = async (newStatus: string) => {
     if (newStatus === 'CONCLUIDO' && finishFiles.length === 0) {
       alert('Selecione ao menos uma imagem do resultado antes de concluir.');
       return;
     }
+    const invalidFile = finishFiles.find((file) => !file.type.startsWith('image/'));
+    if (invalidFile) {
+      alert(`O arquivo ${invalidFile.name} não é uma imagem suportada.`);
+      return;
+    }
+    const oversizedFile = finishFiles.find((file) => file.size > 25 * 1024 * 1024);
+    if (oversizedFile) {
+      alert(`A imagem ${oversizedFile.name} ultrapassa o limite de 25 MB.`);
+      return;
+    }
     try {
       let finishedImages: string | undefined;
       if (newStatus === 'CONCLUIDO' && finishFiles.length > 0) {
         setUploadingFinish(true);
-        const urls = await uploadApi.uploadMultiple(finishFiles);
+        setFinishUploadProgress(0);
+        const urls = await uploadApi.uploadMultiple(finishFiles, setFinishUploadProgress);
         finishedImages = JSON.stringify(urls);
         setUploadingFinish(false);
       }
@@ -241,6 +253,7 @@ function OrderDetailModal({ order, onClose, onImageClick, onRefresh }: { order: 
       onClose();
     } catch (err: any) {
       setUploadingFinish(false);
+      setFinishUploadProgress(0);
       alert(err.message || 'Erro ao alterar status');
     }
   };
@@ -374,16 +387,34 @@ function OrderDetailModal({ order, onClose, onImageClick, onRefresh }: { order: 
           <div className="flex flex-col gap-2">
             {getNextStatus() === 'CONCLUIDO' && (
               <div className="border rounded-lg p-3 bg-yellow-50">
-                <label className="font-medium text-sm text-yellow-800 block mb-1">Imagens do Resultado (obrigatório, vídeos até 25MB)</label>
+                <label className="font-medium text-sm text-yellow-800 block mb-1">Imagens do Resultado (obrigatório, até 25 MB por imagem)</label>
                 <input
                   type="file"
                   multiple
-                  accept="image/*,video/*"
+                  accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/tiff"
                   onChange={(e) => setFinishFiles(Array.from(e.target.files || []))}
                   className="text-sm"
                 />
                 {finishFiles.length > 0 && (
                   <p className="text-xs text-green-700 mt-1">{finishFiles.length} arquivo(s) selecionado(s)</p>
+                )}
+                {uploadingFinish && (
+                  <div className="mt-3" role="status" aria-live="polite">
+                    <div className="flex justify-between text-xs font-medium text-yellow-800 mb-1">
+                      <span>Enviando imagens...</span>
+                      <span>{finishUploadProgress}%</span>
+                    </div>
+                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-yellow-200">
+                      <div
+                        className="h-full rounded-full bg-yellow-600 transition-[width] duration-200"
+                        style={{ width: `${finishUploadProgress}%` }}
+                        role="progressbar"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={finishUploadProgress}
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
             )}
