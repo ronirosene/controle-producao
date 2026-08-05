@@ -1,9 +1,31 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Fragment, useEffect, useState, useCallback } from 'react';
 import { serviceOrdersApi, customersApi, productsApi, uploadApi, getImageList, assistenciaRegistersApi, ServiceOrder, ServiceOrderItem, Customer, Product } from '@/services/api';
 import { StatusBadge } from '@/app/types';
 import { useAuth } from '@/services/auth';
+
+const STATUS_FLOW = [
+  'AGUARDANDO',
+  'AGUARDANDO_FINANCEIRO',
+  'AGUARDANDO_AUT_CLIENTE',
+  'AGUARDANDO_PRODUCAO',
+  'EM_ANDAMENTO',
+  'CONCLUIDO',
+  'CANCELADO',
+  'ENTREGUE',
+] as const;
+
+const STATUS_LABELS: Record<string, string> = {
+  AGUARDANDO: 'Aguardando',
+  AGUARDANDO_FINANCEIRO: 'Aguardando Financeiro',
+  AGUARDANDO_AUT_CLIENTE: 'Aguardando Autorização do Cliente',
+  AGUARDANDO_PRODUCAO: 'Aguardando Produção',
+  EM_ANDAMENTO: 'Em Andamento',
+  CONCLUIDO: 'Concluídos',
+  CANCELADO: 'Cancelados',
+  ENTREGUE: 'Entregues',
+};
 
 export default function OrdensPage() {
   const { user } = useAuth();
@@ -34,6 +56,17 @@ export default function OrdensPage() {
 
   const hasImages = (order: ServiceOrder) =>
     order.items?.some(i => getImageList(i).length > 0);
+
+  const sortedOrders = [...orders].sort((a, b) => {
+    const statusA = STATUS_FLOW.indexOf(a.status as typeof STATUS_FLOW[number]);
+    const statusB = STATUS_FLOW.indexOf(b.status as typeof STATUS_FLOW[number]);
+    const flowA = statusA === -1 ? STATUS_FLOW.length - 1 : statusA;
+    const flowB = statusB === -1 ? STATUS_FLOW.length - 1 : statusB;
+    if (flowA !== flowB) return flowA - flowB;
+    const updatedDiff = new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    if (updatedDiff !== 0) return updatedDiff;
+    return Number(b.pedido || 0) - Number(a.pedido || 0);
+  });
 
   return (
     <div className="space-y-4">
@@ -112,12 +145,27 @@ export default function OrdensPage() {
             </tr>
           </thead>
           <tbody>
-            {orders.map((order) => {
+            {sortedOrders.map((order, index) => {
               const imgs = order.items?.flatMap(i => getImageList(i)) || [];
               const firstItem = order.items?.[0];
               const totalValue = order.items?.reduce((s, i) => s + (i.price || 0), 0) || 0;
+              const startsStatusGroup = index === 0 || sortedOrders[index - 1].status !== order.status;
+              const statusCount = sortedOrders.filter(item => item.status === order.status).length;
               return (
-                <tr key={order.id} className="border-b hover:bg-gray-50 cursor-pointer" onClick={() => setDetailOrder(order)}>
+                <Fragment key={order.id}>
+                {startsStatusGroup && (
+                  <tr className="border-y bg-slate-100">
+                    <td colSpan={11} className="px-3 py-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-slate-700">{STATUS_LABELS[order.status] || order.status.replace(/_/g, ' ')}</span>
+                        <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-slate-500 shadow-sm">
+                          {statusCount} {statusCount === 1 ? 'pedido' : 'pedidos'}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                <tr className="border-b hover:bg-blue-50 cursor-pointer" onClick={() => setDetailOrder(order)}>
                   <td className="p-3 font-mono font-bold text-gray-700">#{order.pedido}</td>
                   <td className="p-3 font-medium">{order.customer.name}</td>
                   <td className="p-3 text-gray-600">{order.customer.representante || '-'}</td>
@@ -153,6 +201,7 @@ export default function OrdensPage() {
                     <button onClick={() => { serviceOrdersApi.delete(order.id).then(load); }} className="text-red-600 hover:underline">Excluir</button>
                   </td>
                 </tr>
+                </Fragment>
               );
             })}
             {orders.length === 0 && (
