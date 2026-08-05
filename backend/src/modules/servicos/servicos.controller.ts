@@ -19,8 +19,8 @@ export class ServicosController {
   @UseInterceptors(FileInterceptor('file', {
     limits: { fileSize: 5 * 1024 * 1024, files: 1 },
     fileFilter: (_request, file, callback) => {
-      if (!/\.(xlsx|csv)$/i.test(file.originalname)) {
-        callback(new BadRequestException('Formato não suportado. Use XLSX ou CSV.'), false);
+      if (!/\.(xlsx|xls|csv)$/i.test(file.originalname)) {
+        callback(new BadRequestException('Formato não suportado. Use XLSX, XLS ou CSV.'), false);
         return;
       }
       callback(null, true);

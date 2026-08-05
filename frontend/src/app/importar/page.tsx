@@ -3,6 +3,8 @@
 import { useState, useRef, DragEvent } from 'react';
 import { useAuth } from '@/services/auth';
 
+const SUPPORTED_SPREADSHEET = /\.(xlsx|xls|csv)$/i;
+
 export default function ImportarPage() {
   const { user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
@@ -31,11 +33,27 @@ export default function ImportarPage() {
     e.stopPropagation();
     setDragging(false);
     const dropped = e.dataTransfer.files?.[0];
-    if (dropped && /\.(xlsx|csv)$/i.test(dropped.name)) {
+    if (dropped && SUPPORTED_SPREADSHEET.test(dropped.name)) {
       setFile(dropped);
+      setStatus('');
     } else {
+      setFile(null);
       setStatus('Formato inválido. Use .xlsx, .xls ou .csv');
     }
+  };
+
+  const handleFileSelection = (selected?: File) => {
+    if (!selected) {
+      setFile(null);
+      return;
+    }
+    if (!SUPPORTED_SPREADSHEET.test(selected.name)) {
+      setFile(null);
+      setStatus('Formato inválido. Use .xlsx, .xls ou .csv');
+      return;
+    }
+    setFile(selected);
+    setStatus('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,7 +99,7 @@ export default function ImportarPage() {
 
       <div className="bg-white rounded-lg shadow p-6">
         <p className="text-sm text-gray-500 mb-4">
-          <strong>Formatos suportados:</strong> XLSX (Excel) ou CSV.
+          <strong>Formatos suportados:</strong> XLSX, XLS (Excel) ou CSV.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -95,8 +113,8 @@ export default function ImportarPage() {
             <input
               ref={inputRef}
               type="file"
-              accept=".xlsx,.csv"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              accept=".xlsx,.xls,.csv"
+              onChange={(e) => handleFileSelection(e.target.files?.[0])}
               className="hidden"
             />
             {file ? (
@@ -133,7 +151,7 @@ export default function ImportarPage() {
         </form>
 
         {status && (
-          <div className={`mt-4 p-3 rounded-lg text-sm ${status.startsWith('Erro') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+          <div className={`mt-4 p-3 rounded-lg text-sm ${status.startsWith('Erro') || status.startsWith('Formato') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
             {status}
           </div>
         )}
