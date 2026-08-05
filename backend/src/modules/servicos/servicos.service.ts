@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import ExcelJS from 'exceljs';
+import * as XLSX from '@e965/xlsx';
 import { Readable } from 'stream';
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'ronyrosene@gmail.com,pcp@moveispelinson.com.br')
@@ -61,21 +62,34 @@ export class ServicosService {
   }
 
   async importFile(buffer: Buffer, filename: string) {
-    const workbook = new ExcelJS.Workbook();
-    if (filename.toLowerCase().endsWith('.csv')) {
-      await workbook.csv.read(Readable.from(buffer));
-    } else if (filename.toLowerCase().endsWith('.xlsx')) {
-      await workbook.xlsx.load(buffer as any);
+    let rows: any[][] = [];
+    const normalizedFilename = filename.toLowerCase();
+
+    if (normalizedFilename.endsWith('.xls')) {
+      const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true });
+      const firstSheetName = workbook.SheetNames[0];
+      if (!firstSheetName) throw new BadRequestException('Planilha vazia');
+      rows = XLSX.utils.sheet_to_json<any[]>(workbook.Sheets[firstSheetName], {
+        header: 1,
+        defval: '',
+        raw: false,
+      });
     } else {
-      throw new BadRequestException('Formato não suportado. Use XLSX ou CSV.');
+      const workbook = new ExcelJS.Workbook();
+      if (normalizedFilename.endsWith('.csv')) {
+        await workbook.csv.read(Readable.from(buffer));
+      } else if (normalizedFilename.endsWith('.xlsx')) {
+        await workbook.xlsx.load(buffer as any);
+      } else {
+        throw new BadRequestException('Formato não suportado. Use XLSX, XLS ou CSV.');
+      }
+      const worksheet = workbook.worksheets[0];
+      if (!worksheet) throw new BadRequestException('Planilha vazia');
+      worksheet.eachRow({ includeEmpty: true }, (row) => {
+        const values = Array.isArray(row.values) ? row.values.slice(1) : [];
+        rows.push(values.map((value: any) => value?.text ?? value?.result ?? value ?? ''));
+      });
     }
-    const worksheet = workbook.worksheets[0];
-    if (!worksheet) throw new BadRequestException('Planilha vazia');
-    const rows: any[][] = [];
-    worksheet.eachRow({ includeEmpty: true }, (row) => {
-      const values = Array.isArray(row.values) ? row.values.slice(1) : [];
-      rows.push(values.map((value: any) => value?.text ?? value?.result ?? value ?? ''));
-    });
     if (!rows.length) throw new BadRequestException('Nenhuma linha encontrada');
 
     const nomeServico = filename.replace(/\.[^.]+$/, '').trim();
