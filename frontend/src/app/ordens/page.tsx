@@ -320,8 +320,7 @@ function OrderDetailModal({ order, onClose, onImageClick, onRefresh }: { order: 
 
   const nextStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
-      AGUARDANDO_AUT_CLIENTE: 'Autorizado pelo Cliente',
-      AGUARDANDO_PRODUCAO: 'Aguardando Produção',
+      AGUARDANDO_PRODUCAO: 'Cliente aprovou — Enviar para produção',
     };
     return labels[status] || status.replace(/_/g, ' ');
   };
